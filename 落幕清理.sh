@@ -5,7 +5,7 @@
 # Root / 无Root · 使用统计 · 云更新
 # ============================================================
 
-SCRIPT_VERSION="1.0"
+SCRIPT_VERSION="1.1"
 
 # ---------- 云端配置 ----------
 COUNT_HIT_URL="https://countapi.mileshilliard.com/api/v1/hit/luomu-clean-2026"
@@ -91,10 +91,9 @@ report_usage() {
 
 # ---------- 云更新 ----------
 check_update() {
-    local remote ver_file tmp new_ver
+    local remote tmp dl_ver dest dir
     remote=$(http_get "$UPDATE_VERSION_URL" | tr -d '\r\n\t ' | head -c 32)
     [ -z "$remote" ] && return 0
-    # 简单比较：不同且非空即提示
     [ "$remote" = "$SCRIPT_VERSION" ] && return 0
 
     echo ""
@@ -108,37 +107,42 @@ check_update() {
             echo "  ${C}…${RST} 正在下载"
             if http_get_file "$UPDATE_SCRIPT_URL" "$tmp"; then
                 if [ -s "$tmp" ] && grep -q "落幕清理" "$tmp" 2>/dev/null; then
-                    # 尽量覆盖自身
+                    dl_ver=$(grep -m1 'SCRIPT_VERSION=' "$tmp" 2>/dev/null | head -1 | cut -d'"' -f2)
+                    if [ -n "$dl_ver" ] && [ "$dl_ver" != "$remote" ]; then
+                        echo "  ${R}✕ 云端脚本版本是 ${dl_ver}，与 version.txt(${remote}) 不一致${RST}"
+                        echo "  ${Y}请把 GitHub 上的脚本也改成 ${remote} 再上传${RST}"
+                        rm -f "$tmp" 2>/dev/null
+                        echo ""
+                        return 0
+                    fi
                     if cp -f "$tmp" "$SCRIPT_PATH" 2>/dev/null; then
                         chmod 755 "$SCRIPT_PATH" 2>/dev/null
                         rm -f "$tmp" 2>/dev/null
-                        echo "  ${G}✓ 更新完成，请重新运行脚本${RST}"
+                        echo "  ${G}✓ 更新完成 → v${dl_ver:-$remote}${RST}"
+                        echo "  ${Y}请重新运行${RST}"
                         echo ""
                         exit 0
-                    else
-                        # 写到同目录
-                        local dir base dest
-                        dir=$(dirname "$SCRIPT_PATH")
-                        dest="${dir}/落幕清理.sh"
-                        if cp -f "$tmp" "$dest" 2>/dev/null; then
-                            chmod 755 "$dest" 2>/dev/null
-                            rm -f "$tmp" 2>/dev/null
-                            echo "  ${G}✓ 已保存到 ${dest}${RST}"
-                            echo "  ${Y}请运行新文件${RST}"
-                            exit 0
-                        fi
-                        echo "  ${R}✕ 无法覆盖当前脚本，已下载到 ${tmp}${RST}"
                     fi
+                    dir=$(dirname "$SCRIPT_PATH")
+                    dest="${dir}/落幕清理.sh"
+                    if cp -f "$tmp" "$dest" 2>/dev/null; then
+                        chmod 755 "$dest" 2>/dev/null
+                        rm -f "$tmp" 2>/dev/null
+                        echo "  ${G}✓ 已保存到 ${dest}${RST}"
+                        echo "  ${Y}请运行新文件${RST}"
+                        exit 0
+                    fi
+                    echo "  ${R}✕ 无法写入，文件在 ${tmp}${RST}"
                 else
                     echo "  ${R}✕ 下载文件无效${RST}"
                     rm -f "$tmp" 2>/dev/null
                 fi
             else
-                echo "  ${R}✕ 下载失败（网络或 GitHub 不可用）${RST}"
+                echo "  ${R}✕ 下载失败${RST}"
             fi
             ;;
         *)
-            echo "  ${GR}已跳过更新${RST}"
+            echo "  ${GR}已跳过${RST}"
             ;;
     esac
     echo ""
