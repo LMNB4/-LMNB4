@@ -1,171 +1,1501 @@
 #!/system/bin/sh
-# 落幕清理 v1.3 | 发布版
-# 受保护内容 · 禁止反编译/二改/倒卖
-_R='\033[0;31m';_Z='\033[0m'
-_die(){ echo "${_R}$1${_Z}"; exit 1; }
+# ============================================================
+# 落幕清理  v1.4
+#
+# Root / 无Root
+# ============================================================
 
-_k0="H4sIAGKF6GoC/+09a3fURrLf51f0ChMzzpmXDQTMIecCYZPcmwQukM36QnaOZiTPKB5JE0ljMNjnOA+D2QAmCYZAnNcGAslu"
-_k1="gGyyweERzrk/hbXG40/cn3CrH5JaUmsetklu9twJJ9aou6qrq6qrq6ure1IH9xx4cf+h4h/2Hjj44r5XdkqF7JCUSu3Z9+or"
-_k2="h4ovvHio+OqBl3ZKVcep28O5XNlsGI5c17K6VlPtqlarabKlZMumnoO3ufFCrqo5uVrD1BuZck2VjcxgfnCrxNA9v7dndBVV"
-_k3="hO7V/c/tOrQX04zxHdwppXyMipF9w1bUmjZuZQ0ArlRzL738yu7NuQz582+6rBm5cdWyNdPIOsccH9KSj2YrmlNtlBq2apVN"
-_k4="w1ENh5DCw+cS4SvVumUemyCNrhWn30MmnFV1snX+gfvTfHNxZvn8yaxdXVVHk3CstbMb927buD2/cfdzG/du2bh7+8btWzbu"
-_k5="3bpx97aN2+DhGVy0bStuDzTxwM7+I/mhocP5HUMFvT/1fPB1EL6OsK+FHUND8HV3ULoZvu4Jvm6Fr68FlZ/BqALU2/PwfX9Q"
-_k6="ewt8PXDwkPcCY9730nMeOHxNvXiweGDfvkM78ykmo/27Dr2wU+rLA8nFg4d2HThUPHQQSh1NV62i7ciWsymNTqQQfILyvk2K"
-_k7="7Kjo6Y02Gnw2p6jjOaNRq6VJrcMocxxJfX5lCb2OnnoK8cinGHrVUHzkNbMs1xC8QWXTdpCObPIaXnTTGlRj7WCAPCnSRqE0"
-_k8="REim4qA8VOOwYJDDHoJMRY1SzlXdgZyqahDU+IPJBNI2YZIzQffSab+GjotJb3Joa54rsP2CjeECRrLukxppk3CkXDWRhFDf"
-_k9="iecPTLWmLzUv/QjPr031ndCnyDvkzp5kb2z2Zvn6B30nQDGmJB+VWrPVLvG2wTKqpdifqVSqphmqL0+KjgKiRxemf5V/HrlA"
-_k10="HB7uRTDLEYVrWDXQ/oKEzIbjaQ2MfV3GUh1HZShHnLYMPvtUISITAARxkoqZUfvgSyizC0kvm8dhVpBzW7J5kGUGrIqhlp0M"
-_k11="Vnuoj7bBO10+Rr6jwTzwCcClkHZjxTyB6pZmOKOof6PdD5UAVNqBLNVpWAbK70BTKU4GYcKPQle7IpxUzLyJMvtAizOHMDWZ"
-_k12="DLaEGbkChnBnuCvrQSh7XeClUhyFmbSNaOBhUFqdfNYgme3AC5N1R9B1ajsytleD2B+v02sSDScUhhsks71HyXRNXoJALDs2"
-_k13="WFDJVCYoqGnBV81AfUC7YvqUM3vcYM3h6VQzGoGlwQhA67xmSNU0mpyM1wRMBhRjAIxMVCWsdKSmXxbqqGIaanvdE/aXKh5o"
-_k14="YIO8BE9v1In0fqCn3ls6aKInD05U/AQQIosi8wZUbC4IdZKTqLC/QA10Uo/0Ubcr0McTheHM8hc3WzevNk9fb31x5vH9z5iV"
-_k15="J3YcSwLPDCN4lrErU+jwRO6V19Gj6buInxEsVVZQUTbo1F2WbTKdwncJeOXTODE5Mjmh2pMjew+m/R6gHTv8CgPp8GTk3vm7"
-_k16="O3ex+eMsa2sHKw5MTMEDV225jPtqqXXTcooNG4aK3+FNPJt7MyJRQxKzG0O83dgC3Q6tRKQoem4a7tk4RAxEUBdsRA8tM1UB"
-_k17="+02Uo6qWx4qNOva0IhpiqboJ7pej15FSK4K/jxTNQuAZAg02cirIHONmfE5riPz2TD2a/ooKDjW/nG5+dq358Q/Ni7c9jcG4"
-_k18="OYNAxyH0IrJWktAkciyUUVD/EeuIccRB/fCmihUuU0ZDg+nA5SNDkCKWYh5UQNjI1O88si593vx+vvXw0+Y5Rlxz4az75y/c"
-_k19="yzeklNA9cuduLd84654/t3LqbOvW/OP7Z5qzF2nvlh+8v3xvIbd070tYe8ScLo5FsfEbTBaHuQ7shOfwWrddp56ferTwIesW"
-_k20="DJvmR7eaC9PQoeXTs8SZG+87EUY21SuJqSgX3bn3l8/dpm00F/7mNUPpZ+gp1za5Dz50T59FcSLSPBUhi7NnCvrgnv+KygXM"
-_k21="UhvLEzE87exOaDCBZu+UcqD5co5ofA5e5LJk+c5GRLGvD5Z1UggKFO0oikBF1hYwZ1HctlKWLaUzzoRh8+2X7sKNpcX3Wg8e"
-_k22="hOtHpwt/9ECzEuqLr8YFpiQYN7YHSCavCthQbGIkfjF9ZDKqiwwkeZ3Ef6j9gOFOkesF1B+J4/QLEPoDvQBPZTC2GaVf6gdT"
-_k23="PJgWtkJ7g50H2h7r0GHuxe92trER0U8glQMwvOZR690rWNFBjSm6KbS0eA5xgZBNgf6noezs0uJ069QP0ZEW/XjOQbT7Hehq"
-_k24="gzDqHfAfZm2iH3NsZ0J9cHnA1mtGYI9w6AAUwNPuSNCFlDimBTNwTtUbNVB5JZeP1Qr5T9EPM+ZOJcmhiimYhrUL/m/Iusog"
-_k25="YzGDhJYUrB+aleRsCrSsXOckFmusg1YRS1XVTQU9s2VLHLotHEip0LZC4ozgnrzszlxDuLVEBAmq4TuVa1JcNr2ZY2RqK/Qy"
-_k26="+khXEJ0J3Jsw5Z5Hj05+EIzD4UxfaNaRusA5MtW6dQdmcUDZengePN/uQNuUH9Oc3oZc1LxQd4QKipqaJJpiMZwklHTuaF48"
-_k27="tXTvR4x+frZdN7uWZ6RDQnLEpLhXv2v9cE1ERARnaFmQHK8CzW7d+b718JQIJb824EUIbq9dr8l21Xd4cbDeSnBmpaAGtwCJ"
-_k28="PIjYSQj87zv+4sWuqTD55bP5ravEyBCidcTZd2I/xgjGWYh126qwBkjB4q8f3hBamEh6xxwKUO7H8cn5C4/mz//i/y7F3F6f"
-_k29="nveZye7qg4F8kK6w0cAu3hyYwjJHWEAI8xL5q5a1NeDradKKYz16sSaeXPk1JP4JT4+nrIMxK8MCW551k7jVuOYHoDTsjBXQ"
-_k30="IBpCm2HhvzXkSXkYHl38MDCG/ujYEo4SeZUpcUeMMHkkeGRXzaNFmAi0slrUjFEzGkUyFbWGShaOYlgqjDpYgdnKGBpTLQMK"
-_k31="bNXSoBaUWqamFDUF2XXZKVeRLltjqkPACTaCB68PVKdumXVkmVn4qzTKTpY2EXPmSJtiCEpODILRF4YpNbSakvV8eK8LMVjo"
-_k32="Uzs43OUYDOUBgDWIU5qxBGgJf8KY6TvDTNzzohWYZyzCUDJNpw2aQBoAZqsOuLsVG+HAkq2WG5bKiysG7K+xvSqhpbYkTeKq"
-_k33="kwPS72WtBrikAXhWLcu0yNNe+pTmaZCk2ERNlaQtwzGlmjNRpOoUI5PqV4JCkTIikyQW0yqMxe1wmYqeiI+P6rDt1yTfF+s4"
-_k34="jsY+P3UAZBeyXbxv5VUbmQJnLlozHqPZM/XowplHF6ZR6+bP7tVTSw+/aL51K24YvapvdyyCqeLGF+79OWJnMTFSio/Y42Hn"
-_k35="7caKwd0P31o+fSaYiAhIyGtnuMig74Dr0/fcuTsBLgIixMULMwnZ4tvuwl33/FkfGwESoWM2oj2+5e/vLd/7zCNuF9V2hKMD"
-_k36="BDgcHtu1/0V4AhsSjocF4QxqSeJqcxjANtDCKbJzPLiNUsVMD6gKfRrODw9uncpmRWHNMB9OzjQ/XwyYypBH9IzjBh2qHZh7"
-_k37="83Tri2sBUgoj4m3ItCVhuzvnzl4ioifsA3wESoSPN1PtcHoCevE5H2kAOrWqIXPhye9uR9Y0juZwe6ntljS/Gef3N+mu/voO"
-_k38="JqcUiuqoZadowWThqwabkzaBwmcaaTIn5ePGxcsYKrTdtdiAVt654c6eXD53y/3LO8huILxHcuGG1xC8yJRRP2mqPxLc9SLN"
-_k39="/X/K9/WvqvUgqym66Ykj43KtVsT75nbEadUUul8Af2FWr+uoptkOIjWFFJp7Uf/hfGb760/jvSfbtBzMt8jGEyCL8xC3ALxN"
-_k40="8cFUBbvvdP8AN5kbiEVCvZhku4hkAygvwUzC4p2KJAqS4D1kn83QiT/RXvT1Y1NIaMNkI6iWEgb7KIMYLtJBshnXj/87YnDM"
-_k41="YO/xO/gvzYuIg8ZyGdUMpWipNnWleJXkNkP98g47ohS3X9vzmKhQjjEmy0opp8sVzR7LBXjFO2nJAMmox+xGrqQZPeCOQQg8"
-_k42="Paqoo4HigBxqNt8j8D9rqp0b4BoWbp2ko4kVo/62CPQj+MrkBF9B5fgpg+Z4YUetWFWPRYZSTTV2kiSCwtYptj5w6M50A0OY"
-_k43="eoQospUL9kDOjIIq8lu5Uh/gkvymjIae1NS2nloqJDVT1uvFUOYabQYPKJZ+VFNI+hEy1KPwMARvEJWqCV+hVNqBDHiCYs/p"
-_k44="AHfMZJ7YIGUrrnrCxP5X3ve/SD0jXA8jOmFE6xHLYko+qk3LX99NhwoNyYfnCkNxBG4jYGOmMGjDOh8DQj+jlf3ZsHnpug8x"
-_k45="OGhTl+bkB77X+trURtsPGlASMSmYrRtQ6/qXzU/PNxcXm7Nz7pkZcKpToKNmbVwtVqDRwEOhS8lCaAVZBi9+PO2PGkev1LPk"
-_k46="3ST9/7hcM0HeziSsgJbn5yQ+UFxvlCp6VfGySNjXyWr9jYlJ94Mz7k/fS5F0k1BoP5pLgoktGr1STOlyr72/fPerdtRRgpb/"
-_k47="/nPrve/akdVc+Gb5s2sx4jYgPPE9vn+F8pnuq6UUs0jyzgmjw5M+1e4xdYIoN/cKnHEHvHxUIVNJXS6PyRXVptMh1Q9aASwQ"
-_k48="L0ayLJlg0w6BxStkj2WhUqaqDA9T2BOhHQLaS9oXP6jrzec4j5AgIh5u3Ne+uOhtmBMuMK+R0BTy3fFojwf2aXYUklgalIeC"
-_k49="gj++/xkxiCHng8uRTjEOUaZx3oTPR5FDoe3l2eHtbQ8HO9uBW+HhaZf8wbaPFr7BmSj/eM+dvY1E3e82ESVhD5GMZFA4yQ9E"
-_k50="1kkmnEchdmO4yH1o94OKpO5L1vcyiJbR0ErgrqXbkAGuZXP2DpBBl2mkvsj1bUekrOOSspqxHZg1gceR7VufuuTd1LcWmt/+"
-_k51="pfXw4+Ub7wnaZVmT4PTWxyoIz9lFRbOCDEKN+ICU+JD3Rwgeq8RITiVtYv7PZx++HWLxWCUUWqDsgqY0JS3cdcMOKaOP7PFz"
-_k52="jikGymGMEv+6qKhciXAX3/NfGd5OG+uR6jm7KluqUqxb6qjtZa/qKGONJleKZL+GtJCTXAioIx1luVxVEwmgpbmBbtum9VOi"
-_k53="PdcIYphPiqxt7rVhFkugEY0OW7PUcoT6gR/wUsFuv+eOPfMEsIwzUVfRKMrY2nEVfMqXUUY9ppbZhvGJKXRkR8f9/yS++M0g"
-_k54="9/Yc3amWOm04J3QUZ0L12EkGglM4FbXuVNEgOrIJHUnc5c/QyU0uq8UBCSeJsxcDJAocflOSDfKiI7bqUU0JYaP7LaFXpRoI"
-_k55="H88sA93hHCg6ej0L/eSRjMbeWLDKAYxidEfSgeR7ljdT7GRCo1IAxdezjmqU8TGsN2GK1fC2SvY/8dPB5/5DWi2qkiqD6Vk1"
-_k56="uFzXVw2rQwd6AnZKthR/C9omeLtrz96ecIPTrIFRkR0BLnACNKPSG7p6vUjBlNG6AOUq2C6DjWMpVZGSumqN2lql6nTOM0oa"
-_k57="4U/QhJEmUPPzU62bt5cWz3Vvx2KZVdRxoOawRPZSGyWkHnNSgkyqBg5qi0N3/qELjMhPQ0WCtDypcyKPjyQKjClAOd1wOHch"
-_k58="wMxiFbqqaDIpa5vug/0Q0mHs+ZAWhZ4FroZZArUwdmSWSol5hMA2WOpgXDkW3s/1ASz1W1JtcgEBsJtcQH/mhvpCb6CdepI2"
-_k59="nqROulcvrrxzA+Eexzsb07vYC0oCFaEi18a1sQzpYm5AIvwbEJXJlt6pfOvmoEZS1/i27QnbUfUc84WLERqSMERXOX73gvMx"
-_k60="VHjR5G8yr5OpPFZE5vNYiyE8jFjQtXrJPJbzeOCYegkGj4GjdV4Ez7AEuhJZn1KRsu0PnAHpLerYOpemQvJevX+6VrzcJWGD"
-_k61="5qXPRaGDx/dnmwvT7tXr7pmLj++fjkQSDHMtsYTfQBRhhIsiHGab66//fzzhNxdPECzD8XqanVTquLwWK0R4Zc2Q080v960F"
-_k62="GgWA8cNvhOFRhocMWvrpM7ohhgcVN4PHYhBjHZPIE90PH08Xp7yDLFKu+aXFs5RIwTFvrrOgi2RXmZiOmeWv77p3LwCQO3MD"
-_k63="ut6cv908exObEa/r7sINhLcqKF9g8a2CysaZsQEtEXzNc6eXL99zH8wvf3v68f0z7syse/uT1q35pXszeMeXmH60/PGiO/N9"
-_k64="684t9+d3U8KzC7wnEfY9vfMKnjdALDFmfKxe/PRCZ5gwbnBMekXtgXCzVkq84C3R9JPkMz2+a0K8HxZL6O6EQgd/guAaRjzi"
-_k65="VNcHFQSr+A3Bqp/6z6kEh4n22fOYYI1OF7D9dLbuD5a0/WQO51+QmZt/QRa9/WR525O/JSSFOW9bCoNjEdt8tIoP8pITahkL"
-_k66="jSY6qmxXYTS0qxD9DLCV0MDkQI55QfjJjxXlBtJ+/v5oOCDG7S2EJO1l27V1BDmZkTLe9pHhyVmF2SXPMDTnf1ha/IaaB88w"
-_k67="nGnOnV++etcL4PIGwDcZK/c+gjkTm6O3rnCIz6y89dCdOdu6dQujJ0bi8f2Pmxd+Wlq8CwZlZZpH1np4eeXUGff2g5VT2LdB"
-_k68="ZAWCckyDhXYiOnrZogWP33YjNqiWtIVfChLFQmOyh7ghJX/5/ofutx9JZBuQH1oxmRCWt0594y5+hXlFwJrnrrlzX4J8vDSn"
-_k69="5sLp5qUfhfMSfzxaV7o5HQ212FyKgetY5zMZsintTWttTiKnxMeDEta0PI+CY7xUsMsf3wS1oDOZe/Jy7KqSqLcScI7TP4DF"
-_k70="XLvyrjvzN3fmO4ozFcrcCAy6pzUs2hMqiSuNqJZgPgqFj8wScPPNN9mAJ9HrVGRmAEVTvVyRUJw6MSge38yY/Rz1KVGu/HKL"
-_k71="EWA8eBR0HP9z+oz74J57d553MKgF+ef0WbwqqetkYWKtcU2CvJl2zeuS346zLnLORYshQHnlc9/8gp0/yaQRdvTc83/1bPFp"
-_k72="4bKoa3cbvNEgKhPz5QW3UcDayr15Za2nwiOnwblVWDTm1HFPjuTVd3DpRZ6az+SuVgDtT3n6uMQRrm4PDUax0SN7wwQrdu8/"
-_k73="eWfl8nmws60fvwfB9x7jDNsF4Xm/9teAtDvX56dF0JR37FPeImkRZEIqagrYVXxsIGQ6RGNgP7f+43G5s3f8Syy6Wf/T+jyG"
-_k74="7kIA7AqOOpeHYdXBxITz59LtNtH5C21q5DSHoR6FPzSFqbbKAyAUBzaXLCMMFbaGAjS0gpeW5NX2b3KbRLqyxW7owmy1so/M"
-_k75="J6veEJEVNBMdYF5aF5KCpG6SolSjaeA+ZOisU34bi7x4Wo/n4YppVmpqljWbrei20JVpC2OPCmGw1yQrmkJTHduHFX2/IE6P"
-_k76="txRYPQJ+SzyHKcoe02ttmOr+9NB9/8+Up5voKYc0PMIYXTl1dvnBTTFb/YSILnIg2ComFFIltegOg6cYRduWKbVxHfBtTkD3"
-_k77="wYO7KM3Ymnz7kbtwg5ENU9vK5avtyMaaww6yYdWhj/4gWtURrgDQy+1LwNThKFdAjzcgDRhZ22LjMdRWCIgbl46s1fAQ3J6O"
-_k78="HD+x6nEHBF5iMUE5399wa6K5LwQX7l0vwOMwf5hWt7BsSqLidEAnWPcFl7/oHhI+eZnH/Sw9IJ/YFr3aYevmzR3qBbqlGqPY"
-_k79="C62ys3xFP5zFCqlGwAN2LkRnCP2yfLzn2HnBuCMrlwk7R5MMwAKY5XyONQ3aU1KtpJp1WMsAQh2DtIco12Qb7+dSe92wS95z"
-_k80="PqcdDMZPfB2DaU3afNPx7bvcsQGvNqh0g5Z5b0S6Q2tkMiUaxOFFIwALjlZicfRt2uR/ebrA7u30jcxhNqBBCmTxupdIg+yn"
-_k81="syOavoAK7Syrd65JihiIkP61sVNHa7JBdEaXy2SQ68w/wgXQB62OPZaxxCMOuFpwzCGUPh7YAlwpbg1Yq1wj+NywXz2pRVwz"
-_k82="pwImC+GG5czoMG1cPjqG+k+QxGTUNzjVH3jqrF8h/yOPDyKoCuq3c9ls7qnhXGWHnRvuy+X609Eb+hg4ZwkxMimfH4Z/hcLw"
-_k83="4ODw0FDg0/q9IcEM2hlZUWDStpGUHxwO8IlULpDta9rvNfTyrj2eaAlICEH8CIAQehO+xYOEc/D0Ra++CB3LS57CSg7pb8nx"
-_k84="bUvJSfD/SrWG6oBtrha9zgpnHgJP0vBhuiqTgU/PC+ZoRn6u0Qh7kIGcMjkiJCYuPkG/8Aw7TCJnjvej/l2Z/+qPTWclhxMg"
-_k85="UIE5SUXI/rEAgMiJjPctwJk8OFsffrJ8+jIvwpIjBZAdWG/KzPnGDz778RePgbyzg98X6/igs00iQcW8mP08fPcCYJfpZfoF"
-_k86="TjfHYoycYzJrK+bzcxMkhXi2l75EmLxvV+CqU2wc5g4sHvdYPM6zeDyBxeNRsrypTczp8SfJ6fEwp8c7c3pcxOmuuhRh+B84"
-_k87="ho9zDB/vguGkw7hyo8ExHH+JGpVKzSzhK76POXoxyqaAxwyyFx7HWNlohFhJUEqBj5vOcHzdlhbYiBipPN4oH8PWhUgBxx+L"
-_k88="+pt2j8Cs2UoZHGJAY3UGD2T46quBDGldDo4KTdFVu4K1T7QSrZkVzPOE0qAdutZrXrrmPrxEJ6LrwQpq+eu7UioWCukUQo7H"
-_k89="Vdac0hIOtMy23nnQvPCTe/WKe/t9/4Glt0QiQpFwcvdJInyTPcSFyOYZ7XXvcaHfXjwHHwVeRUgneqd3T8GdkDsVjZhzR/6x"
-_k90="T0Wjmg9vgpaILtXAO2OJIZtEIkPBkmDAtG7daX73Nh8vSaCUJmr4WLB+37qDI/ygcwBLbsF7nsR0yCOriB8pch9S1KV/Hc8w"
-_k91="WJ2EnMM1eH+JEu3GD2wrzAABu+8vWec6mlJsQ1dnMb0EwJvvLc9fDs4OAkM0pQHL3J5MIY+lh8Q4ct84D9udAeRP/h0u5J55"
-_k92="3TsYRuanpcUfmpdY4nUoBuoFSoMHLhFTkKe5mkRP9rpiyfWqVraBaMeOFkYyWQWhKkOJ3S6c0eEtOZ5S4I6qFNDvvIwWHLca"
-_k93="6Oe/kwuHcRqMn+FikRSXp2MtJiQeSAJ2Dwbs3rVnL8t4lzom1ApyaVebYstVJlk88dfQouAtPamQLFacxU5jijnmQ1MUA/jA"
-_k94="DBK9WwMbhwI2rnz9nfvnG7nmmbfpSAhtXIcTI0lzu6EXrHf48YX9/z7Cfd3/6u7n2dc3jvsPWbvKx+fI2yzey67LSlGxtHEY"
-_k95="YJoB2lqrqUpYW49N0PLsmBlDwarUtBI+kF1RNUNzsrYZLz2mqzouiCIIxBMmJkASfx/FYVQxad6z/zDoPw35T5v9py3+09YY"
-_k96="whf2/zHcg+DFC/tHokUjVCpjDj630qaDpYkJ2Rdc8NquascbYw0/E0StVSod0khIFVHBy4cGO4C+BkooO3+sm3imTbqiee7H"
-_k97="lRnsOggr7B5ZPv116x/vJgVvo0ko9TZbMz2Ml83BeGFJDneuuTN3WE5UJNUXp1dFsw90FfTdGtXUmlKVjWzVrMGKiGzXHYdp"
-_k98="/piWrTYMWHYhrdzIYkrrjpU1ZAeUzlFtPmUHg4AszYZRyTL3ApU0I6s72XqtYfPP2bJsyNaE9wrQ6+Bbh1GZYAZVOTsOHknN"
-_k99="RprJfo8sOz5eGsxvzYOVrJp21XzDDFEm1+s4y4Te7GNaMfKOabJpNYysXyFAXG3YYxNKJQsj0rQmEjDsI8N5rzGuWaah40Sk"
-_k100="57yKuPgl06gcV33s+Co8XvMsbWxMztryqOpMGKpDfl9CtQSdg6UyToLBs6RmGgS1XMdibMhZID+qY/EdTZoykbgFGk/yiym0"
-_k101="N/Bi6RzhBNpY8q8ULfFyd8Vx4Pjxkx6Uf0ug/Dhh7+L79GpoifMWko93xT2JaAKtNECubOfPrR7XYNweSfeQzZqYwTrALtLB"
-_k102="uapjdgP/8S+ugWecHQ5/+avhB9L+xk80cdUzuwOT3lSdUDmU2SpOil21OLYG4mjN/Ny6eYvmCOZYYCTkVETyA9tlBUZnBu99"
-_k103="jOSEUM6ODnGcHnr4DGdtP3l75YufIp3qkBzfKYGxS4/Xy672Urihe+DMKmoNzM6qfK/uQlL8emTt56uSllerjjX9skstOqkq"
-_k104="bX7Yh0+TlbrNk+0tOzbR4Yk5S7Q+9oO68Y9o7Y4+UahCe//qOfOoUTNlJRkm+L2Mtm5WqEIc3vPC2rpoHWhdU84xjbd4acei"
-_k105="nyfrNQu5T5GEP2XW4TelwBO8fIOmf9Os1F/UGezg+LVz5wIk7Ry7BHeOA+7k2HVw58J+n9CxS3DnOnlrgtMVIj1cR8crUhCc"
-_k106="zejVJwtrZkTNPFPXziYSLw3Z1Rw4UvhQzL0ZRDngp8t2dNuCIM/QL+6yhbyxyYGXPQcO+29d+FsbyGnC2c/pOR9gRuudBysL"
-_k107="062v3sLHKq5eR4QrZ9y5b6CSe3uOurP4NjTCN3xbXGcagQHdHHfyCWsv5F/FT2jNLbhn51MwIBuC29qo6ByroYakFngKCTd9"
-_k108="80e60WHiNIiP7ApvMI4XL/jXDZNTsAX/HnD+lrvuYAf9C5z5m+9WR9aFMOq8h7r18IL78afJx5MjPzGHfwJo+nTzva9jJwj8"
-_k109="UwQAoJXVqErStzG9LKRR/AY+ekHgjnDbOK39409bD76iFPvWg5xXxz+mGV38DApRszsF14o87/8eZ6QABryXAbA5eWCBPgdq"
-_k110="HPFte1TkEbEiew5wslaMtFeakTXo8sgadFkAOyRq108i7xLJZhEBHZF0YNC6jKqRJz+qqIo9oXHFkK/TyBoi6CNn1taH8s1C"
-_k111="1P93LIKsGUViFnq3B9EfnRHo637PUCwt3qNTKRL9fEYc6O32xYlGgrNHXcL6RiLp/FBHDIGpiK37O8L6FiL+47s9MyXJMKxM"
-_k112="T7un7nZpGPY/CcMQdp/Eg1tw9Gt9hnVou3wdhjP/W8zrMIBjP6eGBwjv3eNDO0SC8d/Xpr9muA6DfzXuQBfDf0Q0/IU/i7N+"
-_k113="bkIHCzDSpQXo2U3oMPZH1jD21+AU9DT2R57s2GdzXzejn1Zd5/G/Pkj/pSzABuTO4GMK/n3wrVPftO7+ld3cw2Qb+j1hJmC8"
-_k114="qcMQwxNXA2fy1o8q6VwYDOqSxlOWWjctp9iw5YrK/+xJKhW7tt2/sl3001w4Spm0isMx87a+aIhp/o3vPTTDYBIbCvy7UFNE"
-_k115="yzv0SDAPsmaSxki0CaLt6fZNBDNigDwySkJoqbKnUVT3/UpUuvQHW1N8pVSq84+rhb3QlJ+a5ynxlkgtSmNqVEv9LxQVL/Jp"
-_k116="jgAA"
-_t=117
+SCRIPT_VERSION="1.4"
 
-_s=""
-_i=0
-while [ "$_i" -lt "$_t" ]; do
-  eval "_s=\"\$_s\$_k$_i\""
-  _i=$((_i+1))
-done
+# ---------- 云端配置 ----------
+COUNT_HIT_URL="https://countapi.mileshilliard.com/api/v1/hit/luomu-clean-2026"
+COUNT_GET_URL="https://countapi.mileshilliard.com/api/v1/get/luomu-clean-2026"
+# 多源更新（任一成功即可）
+UPDATE_VER_URLS="
+https://cdn.jsdelivr.net/gh/LMNB4/-LMNB4@main/version.txt
+https://raw.githubusercontent.com/LMNB4/-LMNB4/main/version.txt
+https://ghproxy.net/https://raw.githubusercontent.com/LMNB4/-LMNB4/main/version.txt
+"
+UPDATE_SCRIPT_URLS="
+https://cdn.jsdelivr.net/gh/LMNB4/-LMNB4@main/落幕清理.sh
+https://raw.githubusercontent.com/LMNB4/-LMNB4/main/落幕清理.sh
+https://ghproxy.net/https://raw.githubusercontent.com/LMNB4/-LMNB4/main/%E8%90%BD%E5%B9%95%E6%B8%85%E7%90%86.sh
+"
 
-_td="${TMPDIR:-/data/local/tmp}"
-[ -w "$_td" ] 2>/dev/null || _td=/sdcard
-_gz="$_td/.LmG$$"
-_sh="$_td/.LmS$$"
+# ---------- 颜色 ----------
+R='\033[0;31m'
+G='\033[0;32m'
+Y='\033[1;33m'
+B='\033[0;34m'
+C='\033[0;36m'
+W='\033[1;37m'
+GR='\033[0;90m'
+P='\033[0;35m'
+RST='\033[0m'
+BOLD='\033[1m'
 
-_cleanup() {
-  rm -f "$_gz" "$_sh" 2>/dev/null
+IS_ROOT=0
+SCRIPT_PATH="$0"
+
+# ---------- 计时 ----------
+_START_TS=0
+timer_start() {
+    _START_TS=$(date +%s 2>/dev/null)
+    [ -z "$_START_TS" ] && _START_TS=0
 }
-trap _cleanup EXIT HUP INT TERM
+timer_end() {
+    local end cost m s
+    end=$(date +%s 2>/dev/null)
+    [ -z "$end" ] && end=0
+    if [ "$_START_TS" -gt 0 ] 2>/dev/null && [ "$end" -ge "$_START_TS" ] 2>/dev/null; then
+        cost=$((end - _START_TS))
+        m=$((cost / 60))
+        s=$((cost % 60))
+        if [ "$m" -gt 0 ]; then
+            echo "  ${GR}耗时 ${W}${m}${GR} 分 ${W}${s}${GR} 秒${RST}"
+        else
+            echo "  ${GR}耗时 ${W}${s}${GR} 秒${RST}"
+        fi
+    fi
+}
 
-if ! command -v base64 >/dev/null 2>&1; then _die "环境不完整(base64)"; fi
-printf '%s' "$_s" | base64 -d > "$_gz" 2>/dev/null || printf '%s' "$_s" | base64 --decode > "$_gz" 2>/dev/null || _die "解码失败"
+line() {
+    echo "${GR}  ────────────────────────────────────────${RST}"
+}
 
-if command -v gzip >/dev/null 2>&1; then
-  gzip -dc "$_gz" > "$_sh" 2>/dev/null
-elif command -v busybox >/dev/null 2>&1; then
-  busybox gzip -dc "$_gz" > "$_sh" 2>/dev/null
+# ---------- 网络工具 ----------
+http_get() {
+    local url="$1" out
+    if command -v curl >/dev/null 2>&1; then
+        out=$(curl -fsSL -A "Mozilla/5.0" --connect-timeout 8 --max-time 20 "$url" 2>/dev/null) && { printf '%s' "$out"; return 0; }
+    fi
+    if command -v wget >/dev/null 2>&1; then
+        out=$(wget -q -O - -T 20 --user-agent="Mozilla/5.0" "$url" 2>/dev/null) && { printf '%s' "$out"; return 0; }
+    fi
+    return 1
+}
+
+http_get_file() {
+    local url="$1" out="$2"
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL -A "Mozilla/5.0" --connect-timeout 8 --max-time 90 -o "$out" "$url" 2>/dev/null && [ -s "$out" ] && return 0
+    fi
+    if command -v wget >/dev/null 2>&1; then
+        wget -q -O "$out" -T 90 --user-agent="Mozilla/5.0" "$url" 2>/dev/null && [ -s "$out" ] && return 0
+    fi
+    return 1
+}
+
+http_get_first() {
+    local u body
+    for u in $1; do
+        [ -z "$u" ] && continue
+        body=$(http_get "$u") || continue
+        [ -n "$body" ] || continue
+        printf '%s' "$body"
+        return 0
+    done
+    return 1
+}
+
+http_get_file_first() {
+    local out="$1" u
+    shift
+    for u in $*; do
+        [ -z "$u" ] && continue
+        rm -f "$out" 2>/dev/null
+        if http_get_file "$u" "$out"; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+confirm() {
+    local msg="${1:-确认执行？}"
+    echo -n "  ${Y}${msg} [y/N] › ${RST}"
+    read _ans
+    case "$_ans" in
+        y|Y|yes|YES) return 0 ;;
+        *) echo "  ${GR}已取消${RST}"; echo ""; return 1 ;;
+    esac
+}
+
+# ---------- 使用次数（匿名、失败忽略） ----------
+report_usage() {
+    (
+        if command -v curl >/dev/null 2>&1; then
+            curl -fsSL --connect-timeout 3 --max-time 5 "$COUNT_HIT_URL" >/dev/null 2>&1
+        elif command -v wget >/dev/null 2>&1; then
+            wget -q -O /dev/null -T 5 "$COUNT_HIT_URL" >/dev/null 2>&1
+        fi
+    ) &
+}
+
+# ---------- 云更新 ----------
+check_update() {
+    local remote tmp dl_ver dir targets tg ok
+    echo ""
+    echo "  ${C}…${RST} 检查更新"
+    remote=$(http_get_first "$UPDATE_VER_URLS" | tr -d '\r\n\t ' | head -c 32)
+    if [ -z "$remote" ]; then
+        echo "  ${Y}!${RST} 无法连接更新服务器"
+        echo "  ${GR}可稍后重试，或检查网络/代理${RST}"
+        echo ""
+        return 0
+    fi
+    if [ "$remote" = "$SCRIPT_VERSION" ]; then
+        echo "  ${G}✓${RST} 已是最新版 ${W}v${SCRIPT_VERSION}${RST}"
+        echo ""
+        return 0
+    fi
+
+    echo "  ${Y}发现新版本 ${W}v${remote}${RST} ${GR}(当前 v${SCRIPT_VERSION})${RST}"
+    echo -n "  ${C}是否更新？[y/N] › ${RST}"
+    read ans
+    case "$ans" in
+        y|Y|yes|YES)
+            tmp="/data/local/tmp/.luomu_update_$$.sh"
+            [ -w /data/local/tmp ] 2>/dev/null || tmp="/sdcard/.luomu_update_$$.sh"
+            echo "  ${C}…${RST} 正在下载"
+            if http_get_file_first "$tmp" $UPDATE_SCRIPT_URLS; then
+                if [ -s "$tmp" ] && grep -q "落幕清理\|SCRIPT_VERSION" "$tmp" 2>/dev/null; then
+                    dl_ver=$(grep -m1 'SCRIPT_VERSION=' "$tmp" 2>/dev/null | head -1 | cut -d'"' -f2)
+                    if [ -n "$dl_ver" ] && [ "$dl_ver" != "$remote" ]; then
+                        echo "  ${R}✕ 脚本 v${dl_ver} 与 version.txt(v${remote}) 不一致${RST}"
+                        rm -f "$tmp" 2>/dev/null
+                        echo ""
+                        return 0
+                    fi
+                    ok=0
+                    for tg in "$SCRIPT_PATH" "/sdcard/落幕清理.sh" "/storage/emulated/0/落幕清理.sh"; do
+                        [ -z "$tg" ] && continue
+                        dir=$(dirname "$tg" 2>/dev/null)
+                        [ -d "$dir" ] || continue
+                        if cp -f "$tmp" "$tg" 2>/dev/null; then
+                            chmod 755 "$tg" 2>/dev/null
+                            ok=1
+                            echo "  ${G}✓${RST} 已写入 $tg"
+                        fi
+                    done
+                    rm -f "$tmp" 2>/dev/null
+                    if [ "$ok" = "1" ]; then
+                        echo "  ${G}✓ 更新完成 → v${dl_ver:-$remote}${RST}"
+                        echo "  ${Y}请重新运行${RST}"
+                        echo ""
+                        exit 0
+                    fi
+                    echo "  ${R}✕ 无法写入脚本${RST}"
+                else
+                    echo "  ${R}✕ 下载文件无效${RST}"
+                    rm -f "$tmp" 2>/dev/null
+                fi
+            else
+                echo "  ${R}✕ 下载失败${RST}"
+            fi
+            ;;
+        *)
+            echo "  ${GR}已跳过${RST}"
+            ;;
+    esac
+    echo ""
+}
+
+# ---------- 开屏 ----------
+splash() {
+    clear
+    echo ""
+    echo ""
+    clear; echo ""; echo ""; echo "                    ${GR}·${RST}"; sleep 0.06
+    clear; echo ""; echo ""; echo "                   ${GR}· ·${RST}"; sleep 0.06
+    clear; echo ""; echo ""; echo "                  ${P}· 落 ·${RST}"; sleep 0.08
+    clear; echo ""; echo ""; echo "                 ${P}· 落幕 ·${RST}"; sleep 0.08
+    clear; echo ""; echo ""; echo "                ${P}· 落幕清 ·${RST}"; sleep 0.08
+    clear; echo ""; echo ""
+    echo "${P}  ╔══════════════════════════════════════╗${RST}"
+    echo "${P}  ║${RST}                                      ${P}║${RST}"
+    echo "${P}  ║${RST}          ${W}${BOLD}落  幕  清  理${RST}            ${P}║${RST}"
+    echo "${P}  ║${RST}              ${GR}v${SCRIPT_VERSION}${RST}                  ${P}║${RST}"
+    echo "${P}  ║${RST}                                      ${P}║${RST}"
+    echo "${P}  ╚══════════════════════════════════════╝${RST}"
+    sleep 0.2
+    echo ""
+    printf "  ${GR}"
+    local i
+    for i in 1 2 3 4 5 6; do
+        printf "▓"
+        sleep 0.05
+    done
+    printf "${RST}\n"
+    sleep 0.1
+}
+
+# ---------- 设备信息 ----------
+show_device_info() {
+    local model brand release sdk kernel serial android_id spatch market mode
+    model=$(getprop ro.product.model 2>/dev/null)
+    brand=$(getprop ro.product.brand 2>/dev/null)
+    release=$(getprop ro.build.version.release 2>/dev/null)
+    sdk=$(getprop ro.build.version.sdk 2>/dev/null)
+    kernel=$(uname -r 2>/dev/null)
+    serial=$(getprop ro.serialno 2>/dev/null)
+    [ -z "$serial" ] && serial=$(getprop ro.boot.serialno 2>/dev/null)
+    android_id=$(settings get secure android_id 2>/dev/null)
+    case "$android_id" in
+        ""|null|*"Failure"*|*"error"*|*"Error"*) android_id="" ;;
+    esac
+    spatch=$(getprop ro.build.version.security_patch 2>/dev/null)
+    market=$(getprop ro.product.marketname 2>/dev/null)
+    [ -z "$market" ] && market=$(getprop ro.product.odm.marketname 2>/dev/null)
+
+    if [ "$IS_ROOT" = "1" ]; then
+        mode="${G}Root${RST}"
+    else
+        mode="${Y}无Root${RST}"
+    fi
+
+    echo "  ${C}┌─ 设备信息${RST}"
+    echo "  ${C}│${RST}"
+    echo "  ${C}│${RST}  模式    $mode"
+    [ -n "$brand" ] && echo "  ${C}│${RST}  品牌    ${W}${brand}${RST}"
+    [ -n "$model" ] && echo "  ${C}│${RST}  型号    ${W}${model}${RST}"
+    [ -n "$market" ] && echo "  ${C}│${RST}  市场名  ${W}${market}${RST}"
+    [ -n "$release" ] && echo "  ${C}│${RST}  系统    ${W}Android ${release}${RST} ${GR}(API ${sdk})${RST}"
+    if [ -n "$kernel" ]; then
+        [ ${#kernel} -gt 28 ] && kernel="${kernel:0:26}.."
+        echo "  ${C}│${RST}  内核    ${W}${kernel}${RST}"
+    fi
+    [ -n "$spatch" ] && echo "  ${C}│${RST}  安补    ${W}${spatch}${RST}"
+    [ -n "$serial" ] && echo "  ${C}│${RST}  序列号  ${GR}${serial}${RST}"
+    [ -n "$android_id" ] && echo "  ${C}│${RST}  Android ID  ${GR}${android_id}${RST}"
+    echo "  ${C}│${RST}"
+    echo "  ${C}└──────────────────────────────${RST}"
+    echo ""
+}
+
+title() {
+    clear
+    echo ""
+    echo "${P}  ╔══════════════════════════════════════╗${RST}"
+    echo "${P}  ║${RST}          ${W}${BOLD}落  幕  清  理${RST}            ${P}║${RST}"
+    echo "${P}  ║${RST}              ${GR}v${SCRIPT_VERSION}${RST}                  ${P}║${RST}"
+    echo "${P}  ╚══════════════════════════════════════╝${RST}"
+    echo ""
+}
+
+# ---------- Root 检测 ----------
+detect_root() {
+    if [ "$(id -u)" = "0" ]; then
+        IS_ROOT=1
+        return 0
+    fi
+    # 部分环境 su 可用
+    if su -c 'id -u' 2>/dev/null | grep -q '^0$'; then
+        IS_ROOT=1
+        return 0
+    fi
+    IS_ROOT=0
+    return 1
+}
+
+get_all_users() {
+    local ids
+    ids=$(pm list users 2>/dev/null | grep -oE '[0-9]+' | sort -u)
+    if [ -z "$ids" ]; then
+        ids="0"
+        for d in /data/user/*; do
+            [ -d "$d" ] || continue
+            u=$(basename "$d")
+            echo "$u" | grep -qE '^[0-9]+$' && ids="$ids $u"
+        done
+        ids=$(echo "$ids" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+    fi
+    echo "$ids"
+}
+
+find_resetprop() {
+    if command -v resetprop >/dev/null 2>&1; then
+        echo "resetprop"
+    elif [ -x /data/adb/magisk/resetprop ]; then
+        echo "/data/adb/magisk/resetprop"
+    elif [ -x /data/adb/ksu/bin/resetprop ]; then
+        echo "/data/adb/ksu/bin/resetprop"
+    else
+        local f
+        f=$(ls /data/adb/modules/*/resetprop 2>/dev/null | head -1)
+        [ -n "$f" ] && [ -x "$f" ] && echo "$f" || echo ""
+    fi
+}
+
+rand_hex() {
+    local len=${1:-16}
+    cat /dev/urandom 2>/dev/null | tr -dc 'a-f0-9' | head -c "$len"
+}
+
+rand_num() {
+    local len=${1:-8}
+    cat /dev/urandom 2>/dev/null | tr -dc '1-9' | head -c "$len"
+}
+
+cmp_line() {
+    local name="$1" old="$2" new="$3" o n
+    o="$old"; n="$new"
+    [ ${#o} -gt 22 ] && o="${o:0:20}.."
+    [ ${#n} -gt 22 ] && n="${n:0:20}.."
+    [ -z "$o" ] && o="(空)"
+    [ -z "$n" ] && n="(空)"
+    printf "  ${G}✓${RST} %-12s\n" "$name"
+    printf "      ${GR}旧${RST} %-22s ${C}→${RST} ${W}%s${RST}\n" "$o" "$n"
+}
+
+# ============================================================
+# 解析游戏包名
+# ============================================================
+resolve_game() {
+    case "$1" in
+        codev)   echo "tmgp.codev|codev|valorant|无畏" ;;
+        pubgmhd) echo "pubgmhd|hpjy|和平" ;;
+        *)       echo "" ;;
+    esac
+}
+
+game_name() {
+    case "$1" in
+        codev)   echo "无畏契约" ;;
+        pubgmhd) echo "和平精英" ;;
+        *)       echo "未知" ;;
+    esac
+}
+
+# ============================================================
+# ROOT：游戏清理
+# ============================================================
+do_clean_game_root() {
+    local key="$1"
+    local pattern gname packages users
+    pattern=$(resolve_game "$key")
+    gname=$(game_name "$key")
+    [ -z "$pattern" ] && { echo "  ${R}未知游戏${RST}"; return 1; }
+
+    title
+    echo "  ${C}▸${RST} 清理 ${W}${gname}${RST}"
+    line
+    echo ""
+    confirm "确认清理 ${gname}？" || return 0
+    timer_start
+
+    packages=$(pm list packages 2>/dev/null | grep -iE "$pattern" | cut -d: -f2)
+    if [ -z "$packages" ]; then
+        echo "  ${R}✕ 未检测到 ${gname}${RST}"
+        echo ""
+        return 0
+    fi
+    echo "  ${G}✓${RST} 包名："
+    for p in $packages; do echo "    ${GR}·${RST} ${W}$p${RST}"; done
+    users=$(get_all_users)
+    echo "  ${G}✓${RST} 用户：${GR}$users${RST}"
+    echo ""
+
+    for p in $packages; do am force-stop "$p" 2>/dev/null; done
+    echo "  ${G}✓${RST} 已停止进程"
+    echo ""
+
+    local uid pkg data_dir
+    for uid in $users; do
+        for pkg in $packages; do
+            echo "  ${Y}📂${RST} ${W}$pkg${RST} ${GR}(用户 $uid)${RST}"
+            for data_dir in "/data/user/$uid/$pkg" "/data/user_de/$uid/$pkg"; do
+                [ -d "$data_dir" ] || continue
+                [ -d "$data_dir/shared_prefs" ] && rm -rf "$data_dir/shared_prefs" 2>/dev/null && echo "    ${G}✓${RST} shared_prefs"
+                [ -d "$data_dir/cache" ] && rm -rf "$data_dir/cache"/* 2>/dev/null && echo "    ${G}✓${RST} cache"
+                rm -rf "$data_dir/code_cache" "$data_dir/no_backup" 2>/dev/null
+                if [ -d "$data_dir/databases" ]; then
+                    find "$data_dir/databases" -type f -size -1M -exec rm -f {} \; 2>/dev/null
+                    echo "    ${G}✓${RST} databases 小文件"
+                fi
+                if [ -d "$data_dir/files" ]; then
+                    find "$data_dir/files" -maxdepth 2 \( \
+                        -name "ace_*" -o -name "*.mark" -o -name "*.ban" -o \
+                        -name "hwid*" -o -name "device*" -o -name "blacklist*" -o \
+                        -name "*_tmp.dat" -o -name "fp.dat" -o -name "risk*" \
+                    \) -type f -exec rm -f {} \; 2>/dev/null
+                    rm -rf \
+                        "$data_dir/files/com.tencent.qimei.sdk.QimeiSDK" \
+                        "$data_dir/files/com.tencent.beacon" \
+                        "$data_dir/files/com.tencent.apm" \
+                        "$data_dir/files/com.tencent.msdk" \
+                        "$data_dir/files/tbs" "$data_dir/files/ace" "$data_dir/files/ACE" \
+                        "$data_dir/files/anticheat" "$data_dir/files/turing" \
+                        "$data_dir/files/app_turingdfp" "$data_dir/files/beacon" \
+                        "$data_dir/files/ano_tmp" "$data_dir/files/perfsight" 2>/dev/null
+                    find "$data_dir/files" -type f -size -1M -exec rm -f {} \; 2>/dev/null
+                    echo "    ${G}✓${RST} files 标记与小文件"
+                fi
+            done
+            local bases base sub ext
+            if [ "$uid" = "0" ]; then
+                bases="/sdcard /storage/emulated/0"
+            else
+                bases="/storage/emulated/$uid /mnt/user/$uid/emulated/0 /data/media/$uid"
+            fi
+            for base in $bases; do
+                for sub in data obb; do
+                    ext="$base/Android/$sub/$pkg"
+                    [ -d "$ext" ] || continue
+                    rm -rf "$ext/cache"/* 2>/dev/null
+                    find "$ext" -type f -size -1M -exec rm -f {} \; 2>/dev/null
+                    echo "    ${G}✓${RST} 外部 $sub"
+                done
+            done
+            rm -f /data/dalvik-cache/*"$pkg"* /data/dalvik-cache/arm/*"$pkg"* /data/dalvik-cache/arm64/*"$pkg"* 2>/dev/null
+            rm -f /data/system/package_cache/*"$pkg"* 2>/dev/null
+            echo ""
+        done
+    done
+    rm -rf /data/local/tmp/ace_*.mark /data/local/tmp/*.ban 2>/dev/null
+    rm -rf /data/system/dropbox/* /data/tombstones/* /data/anr/* 2>/dev/null
+    line
+    echo "  ${G}${BOLD}✓ ${gname} 清理完成${RST}"
+    timer_end
+    line
+    echo ""
+}
+
+# ============================================================
+# 无 ROOT：游戏清理（最大化）
+# ============================================================
+do_clean_game_noroot() {
+    local key="$1"
+    local pattern gname packages
+    pattern=$(resolve_game "$key")
+    gname=$(game_name "$key")
+    [ -z "$pattern" ] && { echo "  ${R}未知游戏${RST}"; return 1; }
+
+    title
+    echo "  ${Y}▸${RST} [无Root] 清理 ${W}${gname}${RST}"
+    line
+    echo ""
+    confirm "确认清理 ${gname}？" || return 0
+    timer_start
+
+    packages=$(pm list packages 2>/dev/null | grep -iE "$pattern" | cut -d: -f2)
+    if [ -z "$packages" ]; then
+        echo "  ${R}✕ 未检测到 ${gname}${RST}"
+        echo ""
+        return 0
+    fi
+    echo "  ${G}✓${RST} 包名："
+    for p in $packages; do echo "    ${GR}·${RST} ${W}$p${RST}"; done
+    echo ""
+
+    local pkg ok
+    for pkg in $packages; do
+        echo "  ${Y}▸${RST} ${W}$pkg${RST}"
+
+        # 停进程（部分环境无 root 也可用）
+        if am force-stop "$pkg" 2>/dev/null; then
+            echo "    ${G}✓${RST} force-stop"
+        else
+            echo "    ${GR}· force-stop 不可用${RST}"
+        fi
+
+        # pm clear：清空应用全部数据（无 root 在 adb/部分 shell 可用）
+        # 会清掉登录等，先尝试仅清 cache 相关路径
+        ok=0
+        for base in \
+            /sdcard/Android/data/$pkg \
+            /storage/emulated/0/Android/data/$pkg \
+            /sdcard/Android/obb/$pkg \
+            /storage/emulated/0/Android/obb/$pkg
+        do
+            if [ -d "$base" ]; then
+                if rm -rf "$base/cache" 2>/dev/null; then
+                    echo "    ${G}✓${RST} 外部 cache: $base/cache"
+                    ok=1
+                fi
+                # 小文件标记
+                find "$base" -type f \( -name '*.mark' -o -name 'ace_*' -o -name '*.ban' -o -name 'risk*' \) -exec rm -f {} \; 2>/dev/null
+                find "$base" -type f -size -512k 2>/dev/null | while read -r f; do
+                    case "$f" in
+                        */files/*|*/cache/*|*/code_cache/*) rm -f "$f" 2>/dev/null ;;
+                    esac
+                done
+            fi
+        done
+
+        # 尝试 pm clear（会清空整个应用数据，提示用户）
+        # 无 root 默认不做 pm clear，避免误清登录；改为可选
+        # 这里尽量清 media / 外部
+        for base in /sdcard/Android/media/$pkg /storage/emulated/0/Android/media/$pkg; do
+            [ -d "$base" ] && rm -rf "$base"/* 2>/dev/null && echo "    ${G}✓${RST} media 缓存" && ok=1
+        done
+
+        # 应用自带清缓存接口（Android 有时可用）
+        if command -v cmd >/dev/null 2>&1; then
+            cmd package compile --reset "$pkg" >/dev/null 2>&1
+        fi
+
+        if [ "$ok" = "0" ]; then
+            echo "    ${Y}!${RST} 外部目录不可写"
+        fi
+        echo ""
+    done
+
+    # 无 root 可清的公共目录
+    for d in \
+        /sdcard/tencent \
+        /storage/emulated/0/tencent \
+        /sdcard/Android/data/com.tencent.mobileqq/cache/share
+    do
+        [ -e "$d" ] && rm -rf "$d" 2>/dev/null && echo "  ${G}✓${RST} 已删 $d"
+    done
+
+    line
+    echo "  ${G}${BOLD}✓ ${gname} 清理完成${RST}"
+    timer_end
+    line
+    echo ""
+}
+
+# 无 Root：可选「彻底清空应用数据」
+do_pm_clear_noroot() {
+    local key="$1"
+    local pattern gname packages pkg
+    pattern=$(resolve_game "$key")
+    gname=$(game_name "$key")
+    packages=$(pm list packages 2>/dev/null | grep -iE "$pattern" | cut -d: -f2)
+    if [ -z "$packages" ]; then
+        echo "  ${R}✕ 未检测到 ${gname}${RST}"
+        return 0
+    fi
+    title
+    echo "  ${R}⚠ pm clear 将清空全部数据（含登录）${RST}"
+    line
+    for pkg in $packages; do
+        echo "  · $pkg"
+    done
+    echo ""
+    echo -n "  ${Y}确定？[y/N] › ${RST}"
+    read ans
+    case "$ans" in
+        y|Y)
+            timer_start
+            for pkg in $packages; do
+                am force-stop "$pkg" 2>/dev/null
+                if pm clear "$pkg" 2>/dev/null; then
+                    echo "  ${G}✓${RST} pm clear $pkg"
+                else
+                    echo "  ${R}✕${RST} pm clear 失败: $pkg（权限不足）"
+                fi
+            done
+            timer_end
+            ;;
+        *) echo "  ${GR}已取消${RST}" ;;
+    esac
+    echo ""
+}
+
+# ============================================================
+# ROOT：设备标识
+# ============================================================
+do_reset_identity_root() {
+    title
+    echo "  ${P}▸${RST} 设备标识刷新"
+    line
+    echo ""
+    confirm "确认刷新设备标识？" || return 0
+    timer_start
+
+    local rp users
+    rp=$(find_resetprop)
+    users=$(get_all_users)
+
+    local old_id new_id
+    old_id=$(settings get secure android_id 2>/dev/null)
+    new_id=$(rand_hex 16)
+    [ -z "$new_id" ] && new_id=$(date +%s | md5sum 2>/dev/null | head -c 16)
+    settings put secure android_id "$new_id" 2>/dev/null
+    cmp_line "Android ID" "$old_id" "$new_id"
+    sleep 0.08
+
+    pm clear com.google.android.gms >/dev/null 2>&1
+    pm clear com.google.android.gsf >/dev/null 2>&1
+    cmd adid reset 2>/dev/null
+    rm -rf /data/data/com.google.android.gms/cache/* 2>/dev/null
+    rm -rf /data/data/com.google.android.gms/shared_prefs/adid.xml 2>/dev/null
+    cmp_line "广告 ID" "(系统)" "已重置"
+    sleep 0.08
+
+    local uid
+    for uid in $users; do
+        rm -f "/data/system/users/$uid/settings_ssaid.xml" 2>/dev/null
+    done
+    cmp_line "SSAID" "(已存在)" "已清除"
+    sleep 0.08
+
+    local old_serial new_serial
+    old_serial=$(getprop ro.serialno 2>/dev/null)
+    [ -z "$old_serial" ] && old_serial=$(getprop ro.boot.serialno 2>/dev/null)
+    new_serial=$(rand_num 8)
+    [ -z "$new_serial" ] && new_serial=$(date +%s | tail -c 9)
+    if [ -n "$rp" ]; then
+        $rp -f -n ro.serialno "$new_serial" 2>/dev/null
+        $rp -f -n ro.boot.serialno "$new_serial" 2>/dev/null
+        $rp -f -n vendor.serialno "$new_serial" 2>/dev/null
+    fi
+    local tmp_serial="/data/local/tmp/.lm_serial"
+    echo "$new_serial" > "$tmp_serial" 2>/dev/null
+    chmod 644 "$tmp_serial" 2>/dev/null
+    local old_enf path serial_ok=0
+    old_enf=$(getenforce 2>/dev/null)
+    setenforce 0 2>/dev/null
+    for path in \
+        /sys/devices/soc0/serial_number \
+        /sys/devices/platform/soc/serial_number \
+        /sys/class/android_usb/android0/iSerial
+    do
+        [ -e "$path" ] || continue
+        mount | grep -q "$path" && umount "$path" 2>/dev/null
+        mount --bind "$tmp_serial" "$path" 2>/dev/null && serial_ok=$((serial_ok+1))
+    done
+    [ "$old_enf" = "Enforcing" ] && setenforce 1 2>/dev/null
+    cmp_line "序列号" "$old_serial" "$new_serial"
+    sleep 0.08
+
+    local wlan old_mac new_mac
+    wlan=$(ip link 2>/dev/null | grep -oE 'wlan[0-9]+' | head -1)
+    if [ -n "$wlan" ]; then
+        old_mac=$(ip link show "$wlan" 2>/dev/null | grep -oE 'link/ether [0-9a-f:]+' | awk '{print $2}')
+        new_mac=$(rand_hex 10 | sed 's/../&:/g;s/:$//')
+        [ -z "$new_mac" ] && new_mac="00:00:11:22:33"
+        ip link set "$wlan" address "02:$new_mac" 2>/dev/null
+        cmp_line "WiFi MAC" "$old_mac" "02:$new_mac"
+    else
+        cmp_line "WiFi MAC" "(无接口)" "跳过"
+    fi
+    sleep 0.08
+
+    local old_bt new_bt
+    old_bt=$(settings get secure bluetooth_address 2>/dev/null)
+    new_bt=$(cat /proc/sys/kernel/random/uuid 2>/dev/null | sed 's/-//g;s/../&:/g' | head -c 17 | tr 'a-z' 'A-Z')
+    [ -z "$new_bt" ] && new_bt="02:00:00:00:00:01"
+    settings put secure bluetooth_address "$new_bt" 2>/dev/null
+    cmp_line "蓝牙 MAC" "$old_bt" "$new_bt"
+    sleep 0.08
+
+    local old_oaid new_oaid
+    old_oaid=$(cat /data/system/oaid_persistence_0 2>/dev/null)
+    new_oaid=$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-' | head -c 16)
+    [ -z "$new_oaid" ] && new_oaid=$(rand_hex 16)
+    echo "$new_oaid" > /data/system/oaid_persistence_0 2>/dev/null
+    cmp_line "OAID" "$old_oaid" "$new_oaid"
+    sleep 0.08
+
+    local old_vaid new_vaid
+    old_vaid=$(cat /data/system/vaid_persistence_platform 2>/dev/null)
+    new_vaid=$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-' | head -c 16)
+    [ -z "$new_vaid" ] && new_vaid=$(rand_hex 16)
+    echo "$new_vaid" > /data/system/vaid_persistence_platform 2>/dev/null
+    cmp_line "VAID" "$old_vaid" "$new_vaid"
+    sleep 0.08
+
+    local old_uuid new_uuid
+    old_uuid=$(settings get global extm_uuid 2>/dev/null)
+    new_uuid=$(cat /proc/sys/kernel/random/uuid 2>/dev/null)
+    [ -z "$new_uuid" ] && new_uuid="$(date +%s)-$(rand_hex 8)"
+    settings put global extm_uuid "$new_uuid" 2>/dev/null
+    settings put system key_mqs_uuid "$new_uuid" 2>/dev/null
+    settings put global gcbooster_uuid "$new_uuid" 2>/dev/null
+    cmp_line "UUID" "$old_uuid" "$new_uuid"
+
+    dmesg -c >/dev/null 2>&1
+    logcat -c >/dev/null 2>&1
+    cmp_line "系统日志" "(旧)" "已清空"
+
+    echo ""
+    line
+    echo "  ${G}${BOLD}✓ 设备标识刷新完成${RST}"
+    timer_end
+    line
+    echo ""
+}
+
+# 无 ROOT：设备标识（能改多少改多少）
+do_reset_identity_noroot() {
+    title
+    echo "  ${Y}▸${RST} [无Root] 设备标识"
+    line
+    echo ""
+    confirm "确认尝试刷新标识？" || return 0
+    timer_start
+
+    local old_id new_id
+    old_id=$(settings get secure android_id 2>/dev/null)
+    new_id=$(rand_hex 16)
+    [ -z "$new_id" ] && new_id=$(date +%s | md5sum 2>/dev/null | head -c 16)
+    if settings put secure android_id "$new_id" 2>/dev/null; then
+        cmp_line "Android ID" "$old_id" "$new_id"
+    else
+        echo "  ${R}✕ Android ID 无权限修改${RST}"
+    fi
+
+    if cmd adid reset 2>/dev/null; then
+        cmp_line "广告 ID" "(旧)" "已请求重置"
+    else
+        echo "  ${GR}· 广告 ID：请到 设置 → Google → 广告 → 重置广告 ID${RST}"
+    fi
+
+    local old_bt new_bt
+    old_bt=$(settings get secure bluetooth_address 2>/dev/null)
+    new_bt=$(cat /proc/sys/kernel/random/uuid 2>/dev/null | sed 's/-//g;s/../&:/g' | head -c 17 | tr 'a-z' 'A-Z')
+    if [ -n "$new_bt" ] && settings put secure bluetooth_address "$new_bt" 2>/dev/null; then
+        cmp_line "蓝牙 MAC" "$old_bt" "$new_bt"
+    else
+        echo "  ${GR}· 蓝牙 MAC 无法修改${RST}"
+    fi
+
+    echo ""
+    line
+    echo "  ${G}✓ 完成${RST}"
+    timer_end
+    line
+    echo ""
+}
+
+# ============================================================
+# ROOT：残留清理
+# ============================================================
+do_residual_root() {
+    title
+    echo "  ${Y}▸${RST} 残留清理"
+    line
+    echo ""
+    confirm "确认执行残留清理？" || return 0
+    timer_start
+
+    echo "  ${C}[1/7]${RST} 系统临时"
+    rm -rf /data/cache/* /cache/* /data/anr/* /data/tombstones/* 2>/dev/null
+    rm -rf /data/system/dropbox/* /data/system/graphicsstats/* /data/system/package_cache/* 2>/dev/null
+    find /data/local/tmp -mindepth 1 -maxdepth 1 ! -name '.lm_*' ! -name '.luomu_*' -exec rm -rf {} + 2>/dev/null
+    echo "    ${G}✓${RST}"
+
+    echo "  ${C}[2/7]${RST} ACE 标记"
+    rm -rf /data/local/tmp/ace_* /data/local/tmp/*.mark /data/local/tmp/*.ban 2>/dev/null
+    rm -rf /data/local/tmp/*risk* /data/local/tmp/*ace* /data/local/tmp/*turing* 2>/dev/null
+    rm -rf /mnt/vendor/persist/data/*.dat /persist/data/*.dat 2>/dev/null
+    echo "    ${G}✓${RST}"
+
+    echo "  ${C}[3/7]${RST} 驱动/挂残留"
+    local p
+    for p in /dev/Bing /data/BingHPJY /data/BingPUBG /data/jz /data/jz.sh \
+        /data/.gamepad_driver_installed /data/system/xydriver.ko \
+        /data/system/liborangeinit.so /data/system/liboxmem.so \
+        /data/local/tmp/gamepad_driver.so /data/gamepad_driver.so \
+        /data/nh.ko /data/nh /data/nh2 /data/nh3 /data/nh4 /data/nh5 /data/nh6 \
+        /data/HPX /data/system/HPX /data/HPY /data/system/HPY /dev/kt_tmp \
+        /data/local/tmp/byyang /data/local/tmp/shizuku /sdcard/elgg \
+        /storage/emulated/0/elgg /storage/emulated/0/MT2 \
+        /storage/emulated/0/WechatXposed /storage/emulated/0/落叶配置 /storage/emulated/0/BY物资
+    do
+        [ -e "$p" ] && rm -rf "$p" 2>/dev/null
+    done
+    echo "    ${G}✓${RST}"
+
+    echo "  ${C}[4/7]${RST} 检测工具缓存"
+    local pkg base
+    for pkg in me.garfieldhan.holmes com.zhenxi.hunter icu.nullptr.nativetest \
+        com.byyoung.setting bin.mt.plus bin.mt.plus.canary bin.mt.termex \
+        com.omarea.vtools io.github.vvb2060.mahoshojo icu.nullptr.applistdetector \
+        com.byxiaorun.detector io.github.huskydg.memorydetector \
+        com.OrangeEnvironment.Detector com.Longze.detector.pro2 \
+        rikka.safetynetchecker io.github.vvb2060.keyattestation com.apocalua.run
+    do
+        rm -rf /data/data/"$pkg"/cache/* 2>/dev/null
+        for base in /storage/emulated/0 /sdcard; do
+            rm -rf "$base/Android/data/$pkg" "$base/Android/obb/$pkg" 2>/dev/null
+        done
+    done
+    echo "    ${G}✓${RST}"
+
+    echo "  ${C}[5/7]${RST} 可疑脚本"
+    find /sdcard /storage/emulated/0 /data/local/tmp -type f \( -name "*.sh" -o -name "*.zip" \) 2>/dev/null | while read -r f; do
+        case "$f" in
+            */magisk*|*/ksu*|*/modules/*|*/adb/*|*落幕清理*) continue ;;
+            /system/*|/vendor/*) continue ;;
+        esac
+        rm -f "$f" 2>/dev/null
+    done
+    echo "    ${G}✓${RST}"
+
+    echo "  ${C}[6/7]${RST} 腾讯目录/日志"
+    rm -rf /sdcard/tencent /storage/emulated/0/tencent /data/local/tmp/tencent 2>/dev/null
+    dmesg -c >/dev/null 2>&1; logcat -c >/dev/null 2>&1
+    echo "    ${G}✓${RST}"
+
+    echo "  ${C}[7/7]${RST} 杂项"
+    rm -rf /storage/emulated/0/Android/data/com.tencent.mobileqq/cache/share 2>/dev/null
+    find /data/local/tmp -type f -name '*.log' -delete 2>/dev/null
+    echo "    ${G}✓${RST}"
+
+    echo ""
+    line
+    echo "  ${G}${BOLD}✓ 残留清理完成${RST}"
+    timer_end
+    line
+    echo ""
+}
+
+# 无 ROOT：残留清理
+do_residual_noroot() {
+    title
+    echo "  ${Y}▸${RST} [无Root] 残留清理"
+    line
+    echo ""
+    confirm "确认执行残留清理？" || return 0
+    timer_start
+
+    local d
+    echo "  ${C}…${RST} 公共目录"
+    for d in \
+        /sdcard/tencent /storage/emulated/0/tencent \
+        /sdcard/elgg /storage/emulated/0/elgg \
+        /sdcard/MT2 /storage/emulated/0/MT2 \
+        /sdcard/WechatXposed /storage/emulated/0/WechatXposed \
+        /storage/emulated/0/Download/WechatXposed \
+        /sdcard/落叶配置 /storage/emulated/0/落叶配置 \
+        /sdcard/BY物资 /storage/emulated/0/BY物资 \
+        /storage/emulated/0/Android/data/com.tencent.mobileqq/cache/share
+    do
+        if [ -e "$d" ]; then
+            rm -rf "$d" 2>/dev/null && echo "  ${G}✓${RST} $d"
+        fi
+    done
+
+    echo "  ${C}…${RST} 检测器外部数据"
+    local pkg base
+    for pkg in me.garfieldhan.holmes com.zhenxi.hunter icu.nullptr.nativetest \
+        bin.mt.plus bin.mt.plus.canary io.github.vvb2060.mahoshojo \
+        icu.nullptr.applistdetector com.byxiaorun.detector \
+        io.github.huskydg.memorydetector com.OrangeEnvironment.Detector \
+        com.Longze.detector.pro2 rikka.safetynetchecker com.apocalua.run
+    do
+        for base in /sdcard /storage/emulated/0; do
+            rm -rf "$base/Android/data/$pkg" "$base/Android/obb/$pkg" "$base/Android/media/$pkg" 2>/dev/null
+        done
+    done
+    echo "  ${G}✓${RST} 检测器外部目录"
+
+    echo "  ${C}…${RST} 可疑 sh/zip（仅 sdcard）"
+    find /sdcard /storage/emulated/0 -maxdepth 3 -type f \( -name "*.sh" -o -name "*.zip" \) 2>/dev/null | while read -r f; do
+        case "$f" in
+            *落幕清理*|*Magisk*|*ksu*) continue ;;
+        esac
+        # 不删用户可能需要的大 zip，只删小脚本和可疑名
+        case "$f" in
+            *.sh) rm -f "$f" 2>/dev/null ;;
+        esac
+    done
+    echo "  ${G}✓${RST}"
+
+    echo ""
+    line
+    echo "  ${G}${BOLD}✓ 残留清理完成${RST}"
+    timer_end
+    line
+    echo ""
+}
+
+# ============================================================
+# 菜单
+# ============================================================
+menu_game_root() {
+    while true; do
+        title
+        echo "  ${C}┌─ 游戏清理 [Root]${RST}"
+        echo "  ${C}│${RST}"
+        echo "  ${C}├─${RST} ${W}1${RST}  无畏契约"
+        echo "  ${C}├─${RST} ${W}2${RST}  和平精英"
+        echo "  ${C}│${RST}"
+        echo "  ${C}└─${RST} ${W}0${RST}  返回"
+        echo ""
+        echo -n "  ${C}请选择 › ${RST}"
+        read choice
+        case "$choice" in
+            1) do_clean_game_root codev; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            2) do_clean_game_root pubgmhd; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            0) return ;;
+            *) sleep 0.4 ;;
+        esac
+    done
+}
+
+menu_game_noroot() {
+    while true; do
+        title
+        echo "  ${Y}┌─ 游戏清理 [无Root]${RST}"
+        echo "  ${Y}│${RST}"
+        echo "  ${Y}├─${RST} ${W}1${RST}  无畏契约"
+        echo "  ${Y}├─${RST} ${W}2${RST}  和平精英"
+        echo "  ${Y}├─${RST} ${W}3${RST}  无畏契约 pm clear"
+        echo "  ${Y}├─${RST} ${W}4${RST}  和平精英 pm clear"
+        echo "  ${Y}│${RST}"
+        echo "  ${Y}└─${RST} ${W}0${RST}  返回"
+        echo ""
+        echo -n "  ${Y}请选择 › ${RST}"
+        read choice
+        case "$choice" in
+            1) do_clean_game_noroot codev; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            2) do_clean_game_noroot pubgmhd; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            3) do_pm_clear_noroot codev; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            4) do_pm_clear_noroot pubgmhd; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            0) return ;;
+            *) sleep 0.4 ;;
+        esac
+    done
+}
+
+
+# ============================================================
+# 春秋词条：在线查阅 + 常见路径清理
+# 文档来源：mingzun09/Chunqiu-Detector-Problem-solution
+# ============================================================
+CQ_DOC_URLS="
+https://cdn.jsdelivr.net/gh/mingzun09/Chunqiu-Detector-Problem-solution@main/language/answer_zh.md
+https://raw.githubusercontent.com/mingzun09/Chunqiu-Detector-Problem-solution/main/language/answer_zh.md
+https://ghproxy.net/https://raw.githubusercontent.com/mingzun09/Chunqiu-Detector-Problem-solution/main/language/answer_zh.md
+"
+CQ_SITE="https://mingzun09.github.io/Chunqiu-Detector-Problem-solution/"
+CQ_CACHE="/data/local/tmp/.luomu_cq_doc.md"
+[ -w /data/local/tmp ] 2>/dev/null || CQ_CACHE="/sdcard/.luomu_cq_doc.md"
+
+# 可尝试直接删除的常见异常路径（综合文档与常见残留）
+cq_cleanable_paths() {
+    cat << 'EOF'
+/data/local/tmp/resetprop
+/data/local/tmp/android_server
+/data/local/tmp/android_server64
+/data/local/tmp/gdbserver
+/data/local/tmp/yshell
+/data/local/tmp/simpleHook
+/data/local/tmp/mount_mask
+/data/local/tmp/scriptTMP
+/data/local/tmp/cleaner_starter
+/data/local/tmp/luckys
+/data/local/tmp/HyperCeiler
+/data/local/tmp/Surfing_update
+/data/local/tmp/DisabledAllGoogleServices
+/data/local/tmp/horae_control.log
+/data/local/tmp/encore_logo.png
+/data/local/luckys
+/data/local/stryker
+/data/local/MIO
+/data/nh.ko
+/data/nh
+/data/nh2
+/data/nh3
+/data/nh4
+/data/nh5
+/data/nh6
+/data/HPX
+/data/HPY
+/data/system/HPX
+/data/system/HPY
+/data/system/xydriver.ko
+/data/system/liboxmem.so
+/data/system/liborangeinit.so
+/data/system/AppRetention
+/data/system/Freezer
+/data/system/NoActive
+/data/system/junge
+/data/BingHPJY
+/data/BingPUBG
+/data/js
+/data/js.sh
+/dev/Bing
+/data/gpu_freq_table.conf
+/data/swap_config.conf
+/data/A内核.ini
+/sdcard/fart
+/sdcard/Download/dexdump
+/system/bin/encore_profiler
+/system/bin/gmsc
+EOF
+}
+
+cq_fetch_doc() {
+    local force="$1" body
+    if [ "$force" != "1" ] && [ -s "$CQ_CACHE" ]; then
+        # 缓存 7 天内有效
+        local now mt age
+        now=$(date +%s 2>/dev/null || echo 0)
+        mt=$(stat -c %Y "$CQ_CACHE" 2>/dev/null || echo 0)
+        age=$((now - mt))
+        if [ "$age" -lt 604800 ] 2>/dev/null; then
+            return 0
+        fi
+    fi
+    echo "  ${C}…${RST} 拉取春秋词条文档"
+    body=$(http_get_first "$CQ_DOC_URLS")
+    if [ -z "$body" ]; then
+        echo "  ${Y}!${RST} 无法下载文档（可稍后重试）"
+        [ -s "$CQ_CACHE" ] && echo "  ${GR}将使用本地缓存${RST}" && return 0
+        return 1
+    fi
+    printf '%s\n' "$body" > "$CQ_CACHE"
+    echo "  ${G}✓${RST} 文档已缓存"
+    return 0
+}
+
+cq_search() {
+    local kw="$1"
+    [ -z "$kw" ] && return 1
+    cq_fetch_doc || return 1
+    [ -s "$CQ_CACHE" ] || return 1
+    echo ""
+    echo "  ${C}关键词：${W}${kw}${RST}"
+    line
+    # 简单按行搜索，输出匹配行及上下文
+    awk -v kw="$kw" '
+      BEGIN{c=0; kw=tolower(kw)}
+      {
+        line=$0
+        low=tolower(line)
+        if (index(low, kw)>0) {
+          if (c<40) {
+            printf "  %s\n", line
+            c++
+          }
+        }
+      }
+      END{
+        if (c==0) print "  (无匹配，可换关键词或打开在线文档)"
+        else if (c>=40) print "  ... 结果过多已截断"
+      }
+    ' "$CQ_CACHE"
+    line
+    echo "  ${GR}在线完整文档：${CQ_SITE}${RST}"
+    echo ""
+}
+
+cq_scan_cleanable() {
+    echo ""
+    echo "  ${C}▸${RST} 扫描本机可清理异常路径"
+    line
+    local p found=0
+    while IFS= read -r p; do
+        [ -z "$p" ] && continue
+        if [ -e "$p" ]; then
+            found=1
+            if [ -d "$p" ]; then
+                echo "  ${Y}[目录]${RST} $p"
+            else
+                echo "  ${Y}[文件]${RST} $p"
+            fi
+        fi
+    done << EOF
+$(cq_cleanable_paths)
+EOF
+    # 额外扫 tmp 可疑名
+    if [ -d /data/local/tmp ]; then
+        for p in /data/local/tmp/*; do
+            [ -e "$p" ] || continue
+            case "$p" in
+                *.mark|*.ban|*ace*|*frida*|*magisk*|*ksu*|*xposed*|*lspd*|*riru*)
+                    echo "  ${Y}[可疑]${RST} $p"
+                    found=1
+                    ;;
+            esac
+        done
+    fi
+    [ "$found" = "0" ] && echo "  ${G}✓ 未发现列表内路径${RST}"
+    line
+    echo ""
+}
+
+cq_clean_one() {
+    local p="$1"
+    [ -z "$p" ] && return 1
+    if [ ! -e "$p" ]; then
+        echo "  ${GR}不存在：$p${RST}"
+        return 1
+    fi
+    # 安全限制：禁止删系统关键根
+    case "$p" in
+        /|/system|/system/*|/vendor|/vendor/*|/proc|/proc/*|/data/adb|/data/adb/*)
+            echo "  ${R}✕ 拒绝删除受保护路径${RST}"
+            return 1
+            ;;
+    esac
+    # 仅允许 data/local、data 下特定、sdcard、dev/Bing 等
+    case "$p" in
+        /data/local/*|/data/nh*|/data/HP*|/data/Bing*|/data/js*|/data/system/HP*|/data/system/xy*|/data/system/libox*|/data/system/liborange*|/data/system/AppRetention*|/data/system/Freezer*|/data/system/NoActive*|/data/system/junge*|/data/gpu*|/data/swap*|/data/A内核*|/dev/Bing*|/sdcard/*|/storage/emulated/*)
+            ;;
+        *)
+            echo "  ${R}✕ 不在可清理白名单：$p${RST}"
+            return 1
+            ;;
+    esac
+    confirm "删除 $p ？" || return 1
+    rm -rf "$p" 2>/dev/null
+    if [ -e "$p" ]; then
+        echo "  ${R}✕ 删除失败${RST}"
+    else
+        echo "  ${G}✓ 已删除${RST}"
+    fi
+}
+
+cq_clean_all_found() {
+    confirm "删除扫描到的全部白名单路径？" || return 0
+    local p n=0
+    while IFS= read -r p; do
+        [ -z "$p" ] && continue
+        [ -e "$p" ] || continue
+        case "$p" in
+            /data/local/*|/data/nh*|/data/HP*|/data/Bing*|/data/js*|/data/system/HP*|/data/system/xy*|/data/system/libox*|/data/system/liborange*|/data/system/AppRetention*|/data/system/Freezer*|/data/system/NoActive*|/data/system/junge*|/data/gpu*|/data/swap*|/data/A内核*|/dev/Bing*|/sdcard/fart*|/sdcard/Download/dexdump*)
+                rm -rf "$p" 2>/dev/null && echo "  ${G}✓${RST} $p" && n=$((n+1))
+                ;;
+        esac
+    done << EOF
+$(cq_cleanable_paths)
+EOF
+    echo "  ${G}完成，处理约 ${n} 项${RST}"
+    echo ""
+}
+
+menu_chunqiu() {
+    while true; do
+        title
+        echo "  ${C}┌─ 春秋词条${RST}"
+        echo "  ${C}│${RST}"
+        echo "  ${C}├─${RST} ${W}1${RST}  搜索词条/路径说明"
+        echo "  ${C}├─${RST} ${W}2${RST}  扫描可清理异常路径"
+        echo "  ${C}├─${RST} ${W}3${RST}  删除指定路径"
+        echo "  ${C}├─${RST} ${W}4${RST}  一键清理扫描命中项"
+        echo "  ${C}├─${RST} ${W}5${RST}  强制刷新在线文档"
+        echo "  ${C}│${RST}"
+        echo "  ${C}│${RST}  ${GR}文档站: mingzun09.github.io/...${RST}"
+        echo "  ${C}│${RST}"
+        echo "  ${C}└─${RST} ${W}0${RST}  返回"
+        echo ""
+        echo -n "  ${C}请选择 › ${RST}"
+        read choice
+        case "$choice" in
+            1)
+                echo -n "  ${C}输入关键词(如 文件名/检测项) › ${RST}"
+                read kw
+                cq_search "$kw"
+                echo -n "  ${GR}回车返回…${RST}"; read _
+                ;;
+            2)
+                cq_scan_cleanable
+                echo -n "  ${GR}回车返回…${RST}"; read _
+                ;;
+            3)
+                echo -n "  ${C}输入完整路径 › ${RST}"
+                read path
+                cq_clean_one "$path"
+                echo -n "  ${GR}回车返回…${RST}"; read _
+                ;;
+            4)
+                cq_scan_cleanable
+                cq_clean_all_found
+                echo -n "  ${GR}回车返回…${RST}"; read _
+                ;;
+            5)
+                cq_fetch_doc 1
+                echo -n "  ${GR}回车返回…${RST}"; read _
+                ;;
+            0) return ;;
+            *) sleep 0.3 ;;
+        esac
+    done
+}
+
+# ============================================================
+# 分区备份：基带 / 字库(NV) / 关键分区
+# 仅 Root；写出到 /sdcard/落幕备份/
+# ============================================================
+BACKUP_ROOT="/sdcard/落幕备份"
+
+part_find() {
+    # 在 by-name 下查找分区节点
+    local name="$1" p
+    for p in \
+        "/dev/block/by-name/$name" \
+        "/dev/block/bootdevice/by-name/$name" \
+        "/dev/block/mapper/$name"
+    do
+        if [ -e "$p" ]; then
+            # 解析真实块设备
+            if [ -L "$p" ]; then
+                readlink -f "$p" 2>/dev/null || echo "$p"
+            else
+                echo "$p"
+            fi
+            return 0
+        fi
+    done
+    # 遍历 by-name
+    for p in /dev/block/by-name/* /dev/block/bootdevice/by-name/*; do
+        [ -e "$p" ] || continue
+        [ "$(basename "$p")" = "$name" ] || continue
+        readlink -f "$p" 2>/dev/null || echo "$p"
+        return 0
+    done
+    return 1
+}
+
+part_backup_one() {
+    local name="$1" outdir="$2" dev out
+    dev=$(part_find "$name") || {
+        echo "  ${GR}· 无此分区：$name${RST}"
+        return 1
+    }
+    out="$outdir/${name}.img"
+    echo "  ${C}…${RST} $name ← $dev"
+    if dd if="$dev" of="$out" bs=4096 2>/dev/null; then
+        local sz
+        sz=$(wc -c < "$out" 2>/dev/null | tr -d ' ')
+        echo "  ${G}✓${RST} $name  (${sz} bytes)"
+        return 0
+    fi
+    echo "  ${R}✕ $name 备份失败${RST}"
+    rm -f "$out" 2>/dev/null
+    return 1
+}
+
+do_backup_critical() {
+    if [ "$IS_ROOT" != "1" ]; then
+        echo "  ${R}✕ 需要 Root${RST}"
+        return 1
+    fi
+    title
+    echo "  ${P}▸${RST} 备份关键分区"
+    echo "  ${GR}基带/字库/EFS/persist 等，用于救砖与恢复射频${RST}"
+    line
+    echo ""
+    confirm "确认备份？文件较大，请确保存储空间充足" || return 0
+
+    local ts outdir ok=0
+    ts=$(date +%Y%m%d_%H%M%S 2>/dev/null || echo manual)
+    outdir="$BACKUP_ROOT/$ts"
+    mkdir -p "$outdir" 2>/dev/null || {
+        echo "  ${R}✕ 无法创建 $outdir${RST}"
+        return 1
+    }
+
+    echo "  ${G}目录${RST} $outdir"
+    echo ""
+
+    # 常见命名：高通 / MTK / 通用
+    local names="
+modem modemst1 modemst2 fsg fsc efs
+nvram nvdata nvcfg protect1 protect2
+persist opporeserve1 opporeserve2
+oemoem oem
+md1img md1img_a md1img_b
+"
+    local n
+    for n in $names; do
+        part_backup_one "$n" "$outdir" && ok=$((ok+1))
+    done
+
+    # 记录机型信息
+    {
+        echo "model=$(getprop ro.product.model 2>/dev/null)"
+        echo "device=$(getprop ro.product.device 2>/dev/null)"
+        echo "brand=$(getprop ro.product.brand 2>/dev/null)"
+        echo "time=$ts"
+        echo "serial=$(getprop ro.serialno 2>/dev/null)"
+    } > "$outdir/info.txt" 2>/dev/null
+
+    echo ""
+    line
+    if [ "$ok" -gt 0 ]; then
+        echo "  ${G}✓ 完成，成功 ${ok} 个分区${RST}"
+        echo "  ${Y}请复制到电脑/网盘妥善保存${RST}"
+        echo "  ${GR}$outdir${RST}"
+    else
+        echo "  ${Y}! 未备份到任何分区（机型命名可能不同）${RST}"
+        echo "  ${GR}可用「列出分区」查看 by-name${RST}"
+    fi
+    line
+    echo ""
+}
+
+do_list_partitions() {
+    title
+    echo "  ${C}▸${RST} 本机 by-name 分区"
+    line
+    local d
+    for d in /dev/block/by-name /dev/block/bootdevice/by-name; do
+        [ -d "$d" ] || continue
+        echo "  ${W}$d${RST}"
+        ls -1 "$d" 2>/dev/null | while read -r n; do
+            echo "    · $n"
+        done
+        echo ""
+    done
+    line
+    echo ""
+}
+
+do_backup_custom() {
+    if [ "$IS_ROOT" != "1" ]; then
+        echo "  ${R}✕ 需要 Root${RST}"
+        return 1
+    fi
+    echo -n "  ${C}输入分区名(如 persist) › ${RST}"
+    read name
+    [ -z "$name" ] && return 0
+    local ts outdir
+    ts=$(date +%Y%m%d_%H%M%S 2>/dev/null || echo manual)
+    outdir="$BACKUP_ROOT/$ts"
+    mkdir -p "$outdir" 2>/dev/null
+    confirm "备份分区 $name 到 $outdir？" || return 0
+    part_backup_one "$name" "$outdir"
+    echo ""
+}
+
+do_restore_partition() {
+    if [ "$IS_ROOT" != "1" ]; then
+        echo "  ${R}✕ 需要 Root${RST}"
+        return 1
+    fi
+    title
+    echo "  ${R}⚠ 恢复分区有风险，写错可能导致无法开机/无信号${RST}"
+    echo "  ${GR}仅恢复你本人备份、且分区名完全对应的镜像${RST}"
+    line
+    echo -n "  ${C}镜像完整路径(.img) › ${RST}"
+    read img
+    echo -n "  ${C}目标分区名 › ${RST}"
+    read name
+    [ -f "$img" ] || { echo "  ${R}文件不存在${RST}"; return 1; }
+    local dev
+    dev=$(part_find "$name") || { echo "  ${R}找不到分区 $name${RST}"; return 1; }
+    echo "  ${Y}$img → $dev ($name)${RST}"
+    confirm "再次确认：写入该分区？" || return 0
+    if dd if="$img" of="$dev" bs=4096 2>/dev/null; then
+        echo "  ${G}✓ 写入完成，建议重启${RST}"
+    else
+        echo "  ${R}✕ 写入失败${RST}"
+    fi
+    echo ""
+}
+
+menu_backup() {
+    while true; do
+        title
+        echo "  ${P}┌─ 分区备份${RST}"
+        echo "  ${P}│${RST}"
+        echo "  ${P}├─${RST} ${W}1${RST}  一键备份关键分区"
+        echo "  ${P}│${RST}     ${GR}modem/efs/nvram/persist 等${RST}"
+        echo "  ${P}├─${RST} ${W}2${RST}  列出本机分区名"
+        echo "  ${P}├─${RST} ${W}3${RST}  备份指定分区"
+        echo "  ${P}├─${RST} ${W}4${RST}  恢复分区镜像 ${R}(危险)${RST}"
+        echo "  ${P}│${RST}"
+        echo "  ${P}│${RST}  ${GR}备份目录: /sdcard/落幕备份/${RST}"
+        echo "  ${P}│${RST}"
+        echo "  ${P}└─${RST} ${W}0${RST}  返回"
+        echo ""
+        echo -n "  ${P}请选择 › ${RST}"
+        read choice
+        case "$choice" in
+            1) do_backup_critical; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            2) do_list_partitions; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            3) do_backup_custom; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            4) do_restore_partition; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            0) return ;;
+            *) sleep 0.3 ;;
+        esac
+    done
+}
+
+
+main_menu_root() {
+    while true; do
+        title
+        show_device_info
+        echo "  ${P}┌─ 主菜单 ${G}Root${RST}"
+        echo "  ${P}│${RST}"
+        echo "  ${P}├─${RST} ${W}1${RST}  游戏清理"
+        echo "  ${P}├─${RST} ${W}2${RST}  设备标识刷新"
+        echo "  ${P}├─${RST} ${W}3${RST}  残留清理"
+        echo "  ${P}├─${RST} ${W}4${RST}  春秋词条"
+        echo "  ${P}├─${RST} ${W}5${RST}  分区备份"
+        echo "  ${P}├─${RST} ${W}6${RST}  检查更新"
+        echo "  ${P}│${RST}"
+        echo "  ${P}└─${RST} ${W}0${RST}  退出"
+        echo ""
+        echo -n "  ${P}请选择 › ${RST}"
+        read choice
+        case "$choice" in
+            1) menu_game_root ;;
+            2) do_reset_identity_root; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            3) do_residual_root; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            4) menu_chunqiu ;;
+            5) menu_backup ;;
+            6) check_update; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            0) echo ""; echo "  ${G}落幕清理已退出${RST}"; echo ""; exit 0 ;;
+            *) sleep 0.4 ;;
+        esac
+    done
+}
+
+main_menu_noroot() {
+    while true; do
+        title
+        show_device_info
+        echo "  ${Y}┌─ 主菜单 ${Y}无Root${RST}"
+        echo "  ${Y}│${RST}"
+        echo "  ${Y}├─${RST} ${W}1${RST}  游戏清理"
+        echo "  ${Y}├─${RST} ${W}2${RST}  设备标识"
+        echo "  ${Y}├─${RST} ${W}3${RST}  残留清理"
+        echo "  ${Y}├─${RST} ${W}4${RST}  春秋词条(查阅)"
+        echo "  ${Y}├─${RST} ${W}5${RST}  检查更新"
+        echo "  ${Y}│${RST}"
+        echo "  ${Y}└─${RST} ${W}0${RST}  退出"
+        echo ""
+        echo -n "  ${Y}请选择 › ${RST}"
+        read choice
+        case "$choice" in
+            1) menu_game_noroot ;;
+            2) do_reset_identity_noroot; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            3) do_residual_noroot; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            4) menu_chunqiu ;;
+            5) check_update; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            0) echo ""; echo "  ${G}落幕清理已退出${RST}"; echo ""; exit 0 ;;
+            *) sleep 0.4 ;;
+        esac
+    done
+}
+
+# ============================================================
+# 入口
+# ============================================================
+# 解析自身路径
+case "$SCRIPT_PATH" in
+    /*) ;;
+    *) SCRIPT_PATH="$(pwd)/$SCRIPT_PATH" ;;
+esac
+
+report_usage
+detect_root
+
+case "$1" in
+    codev)   [ "$IS_ROOT" = "1" ] && do_clean_game_root codev || do_clean_game_noroot codev; exit 0 ;;
+    pubgmhd) [ "$IS_ROOT" = "1" ] && do_clean_game_root pubgmhd || do_clean_game_noroot pubgmhd; exit 0 ;;
+    reset)   [ "$IS_ROOT" = "1" ] && do_reset_identity_root || do_reset_identity_noroot; exit 0 ;;
+    residual)[ "$IS_ROOT" = "1" ] && do_residual_root || do_residual_noroot; exit 0 ;;
+    update)  check_update; exit 0 ;;
+esac
+
+splash
+check_update
+
+if [ "$IS_ROOT" = "1" ]; then
+    main_menu_root
 else
-  _cleanup
-  _die "环境不完整(gzip)"
+    sleep 0.5
+    main_menu_noroot
 fi
-rm -f "$_gz" 2>/dev/null
-
-if [ ! -s "$_sh" ]; then
-  _cleanup
-  _die "解包失败"
-fi
-chmod 700 "$_sh" 2>/dev/null
-
-# 必须从终端读输入，不能用管道（否则 read 失效、菜单闪退）
-if [ -r /dev/tty ]; then
-  sh "$_sh" "$@" </dev/tty
-  _ec=$?
-else
-  sh "$_sh" "$@"
-  _ec=$?
-fi
-_cleanup
-exit "$_ec"
