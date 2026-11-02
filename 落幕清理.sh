@@ -1,11 +1,11 @@
 #!/system/bin/sh
 # ============================================================
-# 落幕清理  v1.4
+# 落幕清理  v1.5
 #
 # Root / 无Root
 # ============================================================
 
-SCRIPT_VERSION="1.4"
+SCRIPT_VERSION="1.5"
 
 # ---------- 云端配置 ----------
 COUNT_HIT_URL="https://countapi.mileshilliard.com/api/v1/hit/luomu-clean-2026"
@@ -955,9 +955,10 @@ menu_game_noroot() {
 }
 
 
+
 # ============================================================
-# 春秋词条：在线查阅 + 常见路径清理
-# 文档来源：mingzun09/Chunqiu-Detector-Problem-solution
+# 春秋检测：词条查询 + 实用清理
+# 文档：mingzun09/Chunqiu-Detector-Problem-solution
 # ============================================================
 CQ_DOC_URLS="
 https://cdn.jsdelivr.net/gh/mingzun09/Chunqiu-Detector-Problem-solution@main/language/answer_zh.md
@@ -968,7 +969,6 @@ CQ_SITE="https://mingzun09.github.io/Chunqiu-Detector-Problem-solution/"
 CQ_CACHE="/data/local/tmp/.luomu_cq_doc.md"
 [ -w /data/local/tmp ] 2>/dev/null || CQ_CACHE="/sdcard/.luomu_cq_doc.md"
 
-# 可尝试直接删除的常见异常路径（综合文档与常见残留）
 cq_cleanable_paths() {
     cat << 'EOF'
 /data/local/tmp/resetprop
@@ -1017,15 +1017,12 @@ cq_cleanable_paths() {
 /data/A内核.ini
 /sdcard/fart
 /sdcard/Download/dexdump
-/system/bin/encore_profiler
-/system/bin/gmsc
 EOF
 }
 
 cq_fetch_doc() {
     local force="$1" body
     if [ "$force" != "1" ] && [ -s "$CQ_CACHE" ]; then
-        # 缓存 7 天内有效
         local now mt age
         now=$(date +%s 2>/dev/null || echo 0)
         mt=$(stat -c %Y "$CQ_CACHE" 2>/dev/null || echo 0)
@@ -1034,76 +1031,201 @@ cq_fetch_doc() {
             return 0
         fi
     fi
-    echo "  ${C}…${RST} 拉取春秋词条文档"
+    echo "  ${C}…${RST} 拉取春秋文档"
     body=$(http_get_first "$CQ_DOC_URLS")
     if [ -z "$body" ]; then
-        echo "  ${Y}!${RST} 无法下载文档（可稍后重试）"
-        [ -s "$CQ_CACHE" ] && echo "  ${GR}将使用本地缓存${RST}" && return 0
+        echo "  ${Y}!${RST} 无法下载"
+        [ -s "$CQ_CACHE" ] && echo "  ${GR}使用本地缓存${RST}" && return 0
         return 1
     fi
     printf '%s\n' "$body" > "$CQ_CACHE"
-    echo "  ${G}✓${RST} 文档已缓存"
+    echo "  ${G}✓${RST} 已更新缓存"
     return 0
 }
 
+# 在文档中按 <details><summary><b>标题</b> 块检索，输出标题/原因/解决
 cq_search() {
     local kw="$1"
     [ -z "$kw" ] && return 1
     cq_fetch_doc || return 1
     [ -s "$CQ_CACHE" ] || return 1
+
     echo ""
-    echo "  ${C}关键词：${W}${kw}${RST}"
+    echo "  ${C}搜索：${W}${kw}${RST}"
     line
-    # 简单按行搜索，输出匹配行及上下文
+
+    # awk：切分 details 块；标题、全文模糊匹配（去标签、空格）
     awk -v kw="$kw" '
-      BEGIN{c=0; kw=tolower(kw)}
-      {
-        line=$0
-        low=tolower(line)
-        if (index(low, kw)>0) {
-          if (c<40) {
-            printf "  %s\n", line
-            c++
+    function strip(s,    t) {
+      t=s
+      gsub(/<[^>]+>/, "", t)
+      gsub(/[*`#]+/, "", t)
+      gsub(/\r/, "", t)
+      return t
+    }
+    function norm(s,    t) {
+      t=tolower(strip(s))
+      gsub(/[ \t]+/, "", t)
+      return t
+    }
+    BEGIN{
+      nkw=norm(kw)
+      hit=0
+      block=""
+      inb=0
+    }
+    {
+      line=$0
+      if (line ~ /<details>/) {
+        inb=1
+        block=line "\n"
+        next
+      }
+      if (inb) {
+        block=block line "\n"
+        if (line ~ /<\/details>/) {
+          inb=0
+          title=""
+          if (match(block, /<summary><b>[^<]+<\/b><\/summary>/)) {
+            title=substr(block, RSTART, RLENGTH)
+            gsub(/<\/?summary>|<\/?b>/, "", title)
+          } else if (match(block, /<summary>[^<]*<b>[^<]+<\/b>[^<]*<\/summary>/)) {
+            title=substr(block, RSTART, RLENGTH)
+            gsub(/<[^>]+>/, "", title)
+          }
+          body=block
+          gsub(/<details>|<\/details>|<summary>.*<\/summary>/, "", body)
+          nt=norm(title)
+          nb=norm(body)
+          nall=nt nb
+          # 匹配：完整关键词、或去掉空格后包含
+          ok=0
+          if (index(nall, nkw)>0) ok=1
+          # 也允许原文大小写不敏感的空格保留匹配
+          if (ok==0 && index(tolower(strip(title) strip(body)), tolower(kw))>0) ok=1
+          if (ok==1 && hit<8) {
+            hit++
+            printf "  %s【词条 %d】%s%s\n", "'"${W}"'", hit, title, "'"${RST}"'"
+            # 原因 / 检测方式
+            reason=""
+            n=split(body, lines, "\n")
+            mode=""
+            for (i=1;i<=n;i++) {
+              L=lines[i]
+              Ls=strip(L)
+              if (Ls ~ /^####?[ \t]*检测方式/ || Ls ~ /^检测方式/) { mode="detect"; continue }
+              if (Ls ~ /^####?[ \t]*异常原因/ || Ls ~ /^####?[ \t]*原因/ || Ls ~ /^原因/ || Ls ~ /^常见原因/) { mode="reason"; continue }
+              if (Ls ~ /^####?[ \t]*解决/ || Ls ~ /^解决办法/ || Ls ~ /^解决方案/ || Ls ~ /^排查与解决/) { mode="fix"; continue }
+              if (Ls ~ /^####/) { mode=""; continue }
+              if (mode=="detect" || mode=="reason") {
+                if (length(Ls)>0) reason=reason Ls "\n"
+              }
+            }
+            if (length(reason)==0) {
+              # 取正文前几行非空作原因摘要
+              c=0
+              for (i=1;i<=n && c<4;i++) {
+                Ls=strip(lines[i])
+                if (length(Ls)<2) continue
+                if (Ls ~ /^解决/) break
+                reason=reason Ls "\n"
+                c++
+              }
+            }
+            printf "  %s原因/检测：%s\n", "'"${GR}"'", "'"${RST}"'"
+            n2=split(reason, rl, "\n")
+            shown=0
+            for (i=1;i<=n2 && shown<6;i++) {
+              if (length(rl[i])>0) { printf "    %s\n", rl[i]; shown++ }
+            }
+            if (shown==0) print "    (文档未单列原因，见下方解决)"
+            # 解决
+            fix=""
+            mode=""
+            for (i=1;i<=n;i++) {
+              L=lines[i]
+              Ls=strip(L)
+              if (Ls ~ /^####?[ \t]*解决/ || Ls ~ /^解决办法/ || Ls ~ /^解决方案/ || Ls ~ /^排查与解决/) { mode="fix"; continue }
+              if (Ls ~ /^####/) { if (mode=="fix") mode=""; continue }
+              if (mode=="fix" && length(Ls)>0) fix=fix Ls "\n"
+            }
+            if (length(fix)==0) {
+              # 无明确标题时，输出摘要尾部几行
+              c=0
+              for (i=n;i>=1 && c<3;i--) {
+                Ls=strip(lines[i])
+                if (length(Ls)<2) continue
+                fix=Ls "\n" fix
+                c++
+              }
+            }
+            printf "  %s解决：%s\n", "'"${G}"'", "'"${RST}"'"
+            n3=split(fix, fl, "\n")
+            shown=0
+            for (i=1;i<=n3 && shown<8;i++) {
+              if (length(fl[i])>0) { printf "    %s\n", fl[i]; shown++ }
+            }
+            # 可删路径提示
+            if (match(body, /\/[a-zA-Z0-9._\-\/]+/)) {
+              # collect paths in body
+            }
+            print "  '"${GR}"'────────────────────────'"${RST}"'"
           }
         }
       }
-      END{
-        if (c==0) print "  (无匹配，可换关键词或打开在线文档)"
-        else if (c>=40) print "  ... 结果过多已截断"
+    }
+    END{
+      if (hit==0) {
+        print "  未在词条块中命中，尝试全文片段："
       }
+    }
     ' "$CQ_CACHE"
+
+    # 若 details 未命中，退回全文行匹配（兼容旧格式）
+    if ! awk -v kw="$kw" 'BEGIN{nkw=tolower(kw)} index(tolower($0),nkw)>0{found=1; exit} END{exit !found}' "$CQ_CACHE"; then
+        :
+    fi
+
+    # 补充：非 details 的全文行匹配（当上面 hit 可能为 0）
+    awk -v kw="$kw" '
+    BEGIN{ nkw=tolower(kw); gsub(/ /,"",nkw); c=0 }
+    {
+      raw=$0
+      if (raw ~ /<details>/) next
+      low=tolower(raw); gsub(/<[^>]+>/,"",low); gsub(/ /,"",low)
+      if (index(low, nkw)>0) {
+        gsub(/<[^>]+>/,"",raw)
+        if (length(raw)>2 && c<12) { printf "  · %s\n", raw; c++ }
+      }
+    }
+    END{ if(c==0) print "  (无更多全文片段)" }
+    ' "$CQ_CACHE"
+
     line
-    echo "  ${GR}在线完整文档：${CQ_SITE}${RST}"
+    echo "  ${GR}完整文档: ${CQ_SITE}${RST}"
     echo ""
 }
 
 cq_scan_cleanable() {
     echo ""
-    echo "  ${C}▸${RST} 扫描本机可清理异常路径"
+    echo "  ${C}▸${RST} 扫描可清理路径"
     line
     local p found=0
     while IFS= read -r p; do
         [ -z "$p" ] && continue
         if [ -e "$p" ]; then
             found=1
-            if [ -d "$p" ]; then
-                echo "  ${Y}[目录]${RST} $p"
-            else
-                echo "  ${Y}[文件]${RST} $p"
-            fi
+            [ -d "$p" ] && echo "  ${Y}[目录]${RST} $p" || echo "  ${Y}[文件]${RST} $p"
         fi
     done << EOF
 $(cq_cleanable_paths)
 EOF
-    # 额外扫 tmp 可疑名
     if [ -d /data/local/tmp ]; then
         for p in /data/local/tmp/*; do
             [ -e "$p" ] || continue
             case "$p" in
-                *.mark|*.ban|*ace*|*frida*|*magisk*|*ksu*|*xposed*|*lspd*|*riru*)
-                    echo "  ${Y}[可疑]${RST} $p"
-                    found=1
-                    ;;
+                *.mark|*.ban|*ace*|*frida*|*xposed*|*lspd*|*riru*|*magisk*|*ksu*)
+                    echo "  ${Y}[可疑]${RST} $p"; found=1 ;;
             esac
         done
     fi
@@ -1119,33 +1241,23 @@ cq_clean_one() {
         echo "  ${GR}不存在：$p${RST}"
         return 1
     fi
-    # 安全限制：禁止删系统关键根
     case "$p" in
         /|/system|/system/*|/vendor|/vendor/*|/proc|/proc/*|/data/adb|/data/adb/*)
-            echo "  ${R}✕ 拒绝删除受保护路径${RST}"
-            return 1
-            ;;
+            echo "  ${R}✕ 受保护路径，拒绝删除${RST}"; return 1 ;;
     esac
-    # 仅允许 data/local、data 下特定、sdcard、dev/Bing 等
     case "$p" in
-        /data/local/*|/data/nh*|/data/HP*|/data/Bing*|/data/js*|/data/system/HP*|/data/system/xy*|/data/system/libox*|/data/system/liborange*|/data/system/AppRetention*|/data/system/Freezer*|/data/system/NoActive*|/data/system/junge*|/data/gpu*|/data/swap*|/data/A内核*|/dev/Bing*|/sdcard/*|/storage/emulated/*)
+        /data/local/*|/data/nh*|/data/HP*|/data/Bing*|/data/js*|/data/system/HP*|/data/system/xy*|/data/system/libox*|/data/system/liborange*|/data/system/AppRetention*|/data/system/Freezer*|/data/system/NoActive*|/data/system/junge*|/data/gpu*|/data/swap*|/data/A内核*|/dev/Bing*|/sdcard/fart*|/sdcard/Download/dexdump*|/storage/emulated/*/fart*|/storage/emulated/*/Download/dexdump*)
             ;;
         *)
-            echo "  ${R}✕ 不在可清理白名单：$p${RST}"
-            return 1
-            ;;
+            echo "  ${R}✕ 不在可清理白名单${RST}"; return 1 ;;
     esac
     confirm "删除 $p ？" || return 1
     rm -rf "$p" 2>/dev/null
-    if [ -e "$p" ]; then
-        echo "  ${R}✕ 删除失败${RST}"
-    else
-        echo "  ${G}✓ 已删除${RST}"
-    fi
+    [ -e "$p" ] && echo "  ${R}✕ 删除失败${RST}" || echo "  ${G}✓ 已删除${RST}"
 }
 
 cq_clean_all_found() {
-    confirm "删除扫描到的全部白名单路径？" || return 0
+    confirm "删除扫描到的白名单路径？" || return 0
     local p n=0
     while IFS= read -r p; do
         [ -z "$p" ] && continue
@@ -1158,22 +1270,19 @@ cq_clean_all_found() {
     done << EOF
 $(cq_cleanable_paths)
 EOF
-    echo "  ${G}完成，处理约 ${n} 项${RST}"
+    echo "  ${G}完成 ${n} 项${RST}"
     echo ""
 }
 
 menu_chunqiu() {
     while true; do
         title
-        echo "  ${C}┌─ 春秋词条${RST}"
+        echo "  ${C}┌─ 春秋检测${RST}"
         echo "  ${C}│${RST}"
-        echo "  ${C}├─${RST} ${W}1${RST}  搜索词条/路径说明"
-        echo "  ${C}├─${RST} ${W}2${RST}  扫描可清理异常路径"
+        echo "  ${C}├─${RST} ${W}1${RST}  搜索检测词条"
+        echo "  ${C}├─${RST} ${W}2${RST}  扫描并清理异常路径"
         echo "  ${C}├─${RST} ${W}3${RST}  删除指定路径"
-        echo "  ${C}├─${RST} ${W}4${RST}  一键清理扫描命中项"
-        echo "  ${C}├─${RST} ${W}5${RST}  强制刷新在线文档"
-        echo "  ${C}│${RST}"
-        echo "  ${C}│${RST}  ${GR}文档站: mingzun09.github.io/...${RST}"
+        echo "  ${C}├─${RST} ${W}4${RST}  刷新词条文档"
         echo "  ${C}│${RST}"
         echo "  ${C}└─${RST} ${W}0${RST}  返回"
         echo ""
@@ -1181,13 +1290,14 @@ menu_chunqiu() {
         read choice
         case "$choice" in
             1)
-                echo -n "  ${C}输入关键词(如 文件名/检测项) › ${RST}"
+                echo -n "  ${C}输入词条关键词 › ${RST}"
                 read kw
                 cq_search "$kw"
                 echo -n "  ${GR}回车返回…${RST}"; read _
                 ;;
             2)
                 cq_scan_cleanable
+                cq_clean_all_found
                 echo -n "  ${GR}回车返回…${RST}"; read _
                 ;;
             3)
@@ -1197,214 +1307,9 @@ menu_chunqiu() {
                 echo -n "  ${GR}回车返回…${RST}"; read _
                 ;;
             4)
-                cq_scan_cleanable
-                cq_clean_all_found
-                echo -n "  ${GR}回车返回…${RST}"; read _
-                ;;
-            5)
                 cq_fetch_doc 1
                 echo -n "  ${GR}回车返回…${RST}"; read _
                 ;;
-            0) return ;;
-            *) sleep 0.3 ;;
-        esac
-    done
-}
-
-# ============================================================
-# 分区备份：基带 / 字库(NV) / 关键分区
-# 仅 Root；写出到 /sdcard/落幕备份/
-# ============================================================
-BACKUP_ROOT="/sdcard/落幕备份"
-
-part_find() {
-    # 在 by-name 下查找分区节点
-    local name="$1" p
-    for p in \
-        "/dev/block/by-name/$name" \
-        "/dev/block/bootdevice/by-name/$name" \
-        "/dev/block/mapper/$name"
-    do
-        if [ -e "$p" ]; then
-            # 解析真实块设备
-            if [ -L "$p" ]; then
-                readlink -f "$p" 2>/dev/null || echo "$p"
-            else
-                echo "$p"
-            fi
-            return 0
-        fi
-    done
-    # 遍历 by-name
-    for p in /dev/block/by-name/* /dev/block/bootdevice/by-name/*; do
-        [ -e "$p" ] || continue
-        [ "$(basename "$p")" = "$name" ] || continue
-        readlink -f "$p" 2>/dev/null || echo "$p"
-        return 0
-    done
-    return 1
-}
-
-part_backup_one() {
-    local name="$1" outdir="$2" dev out
-    dev=$(part_find "$name") || {
-        echo "  ${GR}· 无此分区：$name${RST}"
-        return 1
-    }
-    out="$outdir/${name}.img"
-    echo "  ${C}…${RST} $name ← $dev"
-    if dd if="$dev" of="$out" bs=4096 2>/dev/null; then
-        local sz
-        sz=$(wc -c < "$out" 2>/dev/null | tr -d ' ')
-        echo "  ${G}✓${RST} $name  (${sz} bytes)"
-        return 0
-    fi
-    echo "  ${R}✕ $name 备份失败${RST}"
-    rm -f "$out" 2>/dev/null
-    return 1
-}
-
-do_backup_critical() {
-    if [ "$IS_ROOT" != "1" ]; then
-        echo "  ${R}✕ 需要 Root${RST}"
-        return 1
-    fi
-    title
-    echo "  ${P}▸${RST} 备份关键分区"
-    echo "  ${GR}基带/字库/EFS/persist 等，用于救砖与恢复射频${RST}"
-    line
-    echo ""
-    confirm "确认备份？文件较大，请确保存储空间充足" || return 0
-
-    local ts outdir ok=0
-    ts=$(date +%Y%m%d_%H%M%S 2>/dev/null || echo manual)
-    outdir="$BACKUP_ROOT/$ts"
-    mkdir -p "$outdir" 2>/dev/null || {
-        echo "  ${R}✕ 无法创建 $outdir${RST}"
-        return 1
-    }
-
-    echo "  ${G}目录${RST} $outdir"
-    echo ""
-
-    # 常见命名：高通 / MTK / 通用
-    local names="
-modem modemst1 modemst2 fsg fsc efs
-nvram nvdata nvcfg protect1 protect2
-persist opporeserve1 opporeserve2
-oemoem oem
-md1img md1img_a md1img_b
-"
-    local n
-    for n in $names; do
-        part_backup_one "$n" "$outdir" && ok=$((ok+1))
-    done
-
-    # 记录机型信息
-    {
-        echo "model=$(getprop ro.product.model 2>/dev/null)"
-        echo "device=$(getprop ro.product.device 2>/dev/null)"
-        echo "brand=$(getprop ro.product.brand 2>/dev/null)"
-        echo "time=$ts"
-        echo "serial=$(getprop ro.serialno 2>/dev/null)"
-    } > "$outdir/info.txt" 2>/dev/null
-
-    echo ""
-    line
-    if [ "$ok" -gt 0 ]; then
-        echo "  ${G}✓ 完成，成功 ${ok} 个分区${RST}"
-        echo "  ${Y}请复制到电脑/网盘妥善保存${RST}"
-        echo "  ${GR}$outdir${RST}"
-    else
-        echo "  ${Y}! 未备份到任何分区（机型命名可能不同）${RST}"
-        echo "  ${GR}可用「列出分区」查看 by-name${RST}"
-    fi
-    line
-    echo ""
-}
-
-do_list_partitions() {
-    title
-    echo "  ${C}▸${RST} 本机 by-name 分区"
-    line
-    local d
-    for d in /dev/block/by-name /dev/block/bootdevice/by-name; do
-        [ -d "$d" ] || continue
-        echo "  ${W}$d${RST}"
-        ls -1 "$d" 2>/dev/null | while read -r n; do
-            echo "    · $n"
-        done
-        echo ""
-    done
-    line
-    echo ""
-}
-
-do_backup_custom() {
-    if [ "$IS_ROOT" != "1" ]; then
-        echo "  ${R}✕ 需要 Root${RST}"
-        return 1
-    fi
-    echo -n "  ${C}输入分区名(如 persist) › ${RST}"
-    read name
-    [ -z "$name" ] && return 0
-    local ts outdir
-    ts=$(date +%Y%m%d_%H%M%S 2>/dev/null || echo manual)
-    outdir="$BACKUP_ROOT/$ts"
-    mkdir -p "$outdir" 2>/dev/null
-    confirm "备份分区 $name 到 $outdir？" || return 0
-    part_backup_one "$name" "$outdir"
-    echo ""
-}
-
-do_restore_partition() {
-    if [ "$IS_ROOT" != "1" ]; then
-        echo "  ${R}✕ 需要 Root${RST}"
-        return 1
-    fi
-    title
-    echo "  ${R}⚠ 恢复分区有风险，写错可能导致无法开机/无信号${RST}"
-    echo "  ${GR}仅恢复你本人备份、且分区名完全对应的镜像${RST}"
-    line
-    echo -n "  ${C}镜像完整路径(.img) › ${RST}"
-    read img
-    echo -n "  ${C}目标分区名 › ${RST}"
-    read name
-    [ -f "$img" ] || { echo "  ${R}文件不存在${RST}"; return 1; }
-    local dev
-    dev=$(part_find "$name") || { echo "  ${R}找不到分区 $name${RST}"; return 1; }
-    echo "  ${Y}$img → $dev ($name)${RST}"
-    confirm "再次确认：写入该分区？" || return 0
-    if dd if="$img" of="$dev" bs=4096 2>/dev/null; then
-        echo "  ${G}✓ 写入完成，建议重启${RST}"
-    else
-        echo "  ${R}✕ 写入失败${RST}"
-    fi
-    echo ""
-}
-
-menu_backup() {
-    while true; do
-        title
-        echo "  ${P}┌─ 分区备份${RST}"
-        echo "  ${P}│${RST}"
-        echo "  ${P}├─${RST} ${W}1${RST}  一键备份关键分区"
-        echo "  ${P}│${RST}     ${GR}modem/efs/nvram/persist 等${RST}"
-        echo "  ${P}├─${RST} ${W}2${RST}  列出本机分区名"
-        echo "  ${P}├─${RST} ${W}3${RST}  备份指定分区"
-        echo "  ${P}├─${RST} ${W}4${RST}  恢复分区镜像 ${R}(危险)${RST}"
-        echo "  ${P}│${RST}"
-        echo "  ${P}│${RST}  ${GR}备份目录: /sdcard/落幕备份/${RST}"
-        echo "  ${P}│${RST}"
-        echo "  ${P}└─${RST} ${W}0${RST}  返回"
-        echo ""
-        echo -n "  ${P}请选择 › ${RST}"
-        read choice
-        case "$choice" in
-            1) do_backup_critical; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
-            2) do_list_partitions; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
-            3) do_backup_custom; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
-            4) do_restore_partition; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
             0) return ;;
             *) sleep 0.3 ;;
         esac
@@ -1421,9 +1326,8 @@ main_menu_root() {
         echo "  ${P}├─${RST} ${W}1${RST}  游戏清理"
         echo "  ${P}├─${RST} ${W}2${RST}  设备标识刷新"
         echo "  ${P}├─${RST} ${W}3${RST}  残留清理"
-        echo "  ${P}├─${RST} ${W}4${RST}  春秋词条"
-        echo "  ${P}├─${RST} ${W}5${RST}  分区备份"
-        echo "  ${P}├─${RST} ${W}6${RST}  检查更新"
+        echo "  ${P}├─${RST} ${W}4${RST}  春秋检测"
+        echo "  ${P}├─${RST} ${W}5${RST}  检查更新"
         echo "  ${P}│${RST}"
         echo "  ${P}└─${RST} ${W}0${RST}  退出"
         echo ""
@@ -1434,8 +1338,7 @@ main_menu_root() {
             2) do_reset_identity_root; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
             3) do_residual_root; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
             4) menu_chunqiu ;;
-            5) menu_backup ;;
-            6) check_update; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
+            5) check_update; echo -n "  ${GR}回车返回…${RST}"; read _ ;;
             0) echo ""; echo "  ${G}落幕清理已退出${RST}"; echo ""; exit 0 ;;
             *) sleep 0.4 ;;
         esac
@@ -1451,7 +1354,7 @@ main_menu_noroot() {
         echo "  ${Y}├─${RST} ${W}1${RST}  游戏清理"
         echo "  ${Y}├─${RST} ${W}2${RST}  设备标识"
         echo "  ${Y}├─${RST} ${W}3${RST}  残留清理"
-        echo "  ${Y}├─${RST} ${W}4${RST}  春秋词条(查阅)"
+        echo "  ${Y}├─${RST} ${W}4${RST}  春秋检测"
         echo "  ${Y}├─${RST} ${W}5${RST}  检查更新"
         echo "  ${Y}│${RST}"
         echo "  ${Y}└─${RST} ${W}0${RST}  退出"
