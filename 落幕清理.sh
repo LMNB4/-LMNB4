@@ -12,14 +12,14 @@ COUNT_HIT_URL="https://countapi.mileshilliard.com/api/v1/hit/luomu-clean-2026"
 COUNT_GET_URL="https://countapi.mileshilliard.com/api/v1/get/luomu-clean-2026"
 # 多源更新（任一成功即可）
 UPDATE_VER_URLS="
-https://cdn.jsdelivr.net/gh/LMNB4/-LMNB4@main/version.txt
 https://raw.githubusercontent.com/LMNB4/-LMNB4/main/version.txt
 https://ghproxy.net/https://raw.githubusercontent.com/LMNB4/-LMNB4/main/version.txt
+https://cdn.jsdelivr.net/gh/LMNB4/-LMNB4@main/version.txt
 "
 UPDATE_SCRIPT_URLS="
-https://cdn.jsdelivr.net/gh/LMNB4/-LMNB4@main/落幕清理.sh
 https://raw.githubusercontent.com/LMNB4/-LMNB4/main/落幕清理.sh
 https://ghproxy.net/https://raw.githubusercontent.com/LMNB4/-LMNB4/main/%E8%90%BD%E5%B9%95%E6%B8%85%E7%90%86.sh
+https://cdn.jsdelivr.net/gh/LMNB4/-LMNB4@main/落幕清理.sh
 "
 
 # ---------- 颜色 ----------
@@ -137,7 +137,20 @@ check_update() {
     local remote tmp dl_ver dir targets tg ok
     echo ""
     echo "  ${C}…${RST} 检查更新"
-    remote=$(http_get_first "$UPDATE_VER_URLS" | tr -d '\r\n\t ' | head -c 32)
+    # 多源取到的版本里选「最高」的，避免 CDN 缓存旧号误判
+    remote=""
+    for _vu in $UPDATE_VER_URLS; do
+        [ -z "$_vu" ] && continue
+        _vr=$(http_get "$_vu" | tr -d '\r\n\t ' | head -c 32)
+        [ -z "$_vr" ] && continue
+        if [ -z "$remote" ]; then
+            remote="$_vr"
+        else
+            # 用 sort -V 比版本
+            _top=$(printf '%s\n%s\n' "$remote" "$_vr" | sort -V | tail -1)
+            remote="$_top"
+        fi
+    done
     if [ -z "$remote" ]; then
         echo "  ${Y}!${RST} 无法连接更新服务器"
         echo "  ${GR}可稍后重试，或检查网络/代理${RST}"
@@ -146,6 +159,13 @@ check_update() {
     fi
     if [ "$remote" = "$SCRIPT_VERSION" ]; then
         echo "  ${G}✓${RST} 已是最新版 ${W}v${SCRIPT_VERSION}${RST}"
+        echo ""
+        return 0
+    fi
+    # 仅当远程「大于」本地才提示更新（防止旧缓存 1.2 覆盖新本地 1.5）
+    _newer=$(printf '%s\n%s\n' "$SCRIPT_VERSION" "$remote" | sort -V | tail -1)
+    if [ "$_newer" != "$remote" ] || [ "$remote" = "$SCRIPT_VERSION" ]; then
+        echo "  ${G}✓${RST} 当前 ${W}v${SCRIPT_VERSION}${RST} 已不低于线上 ${GR}(线上最高 v${remote})${RST}"
         echo ""
         return 0
     fi
