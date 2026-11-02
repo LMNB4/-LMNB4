@@ -1,11 +1,11 @@
 #!/system/bin/sh
 # ============================================================
-# 落幕清理  v1.0
+# 落幕清理  v1.2
 # @LMNB4
 # Root / 无Root · 使用统计 · 云更新
 # ============================================================
 
-SCRIPT_VERSION="1.1"
+SCRIPT_VERSION="1.2"
 
 # ---------- 云端配置 ----------
 COUNT_HIT_URL="https://countapi.mileshilliard.com/api/v1/hit/luomu-clean-2026"
@@ -91,13 +91,22 @@ report_usage() {
 
 # ---------- 云更新 ----------
 check_update() {
-    local remote tmp dl_ver dest dir
-    remote=$(http_get "$UPDATE_VERSION_URL" | tr -d '\r\n\t ' | head -c 32)
-    [ -z "$remote" ] && return 0
-    [ "$remote" = "$SCRIPT_VERSION" ] && return 0
-
+    local remote tmp dl_ver dest dir targets t
     echo ""
-    echo "  ${Y}发现新版本 ${W}${remote}${RST} ${GR}(当前 ${SCRIPT_VERSION})${RST}"
+    echo "  ${C}…${RST} 检查更新"
+    remote=$(http_get "$UPDATE_VERSION_URL" | tr -d '\r\n\t ' | head -c 32)
+    if [ -z "$remote" ]; then
+        echo "  ${Y}!${RST} 无法连接，请稍后重试"
+        echo ""
+        return 0
+    fi
+    if [ "$remote" = "$SCRIPT_VERSION" ]; then
+        echo "  ${G}✓${RST} 已是最新版 ${W}v${SCRIPT_VERSION}${RST}"
+        echo ""
+        return 0
+    fi
+
+    echo "  ${Y}发现新版本 ${W}v${remote}${RST} ${GR}(当前 v${SCRIPT_VERSION})${RST}"
     echo -n "  ${C}是否更新？[y/N] › ${RST}"
     read ans
     case "$ans" in
@@ -109,30 +118,33 @@ check_update() {
                 if [ -s "$tmp" ] && grep -q "落幕清理" "$tmp" 2>/dev/null; then
                     dl_ver=$(grep -m1 'SCRIPT_VERSION=' "$tmp" 2>/dev/null | head -1 | cut -d'"' -f2)
                     if [ -n "$dl_ver" ] && [ "$dl_ver" != "$remote" ]; then
-                        echo "  ${R}✕ 云端脚本版本是 ${dl_ver}，与 version.txt(${remote}) 不一致${RST}"
-                        echo "  ${Y}请把 GitHub 上的脚本也改成 ${remote} 再上传${RST}"
+                        echo "  ${R}✕ 云端脚本 v${dl_ver} 与 version.txt(v${remote}) 不一致${RST}"
+                        echo "  ${Y}请同步上传后再试${RST}"
                         rm -f "$tmp" 2>/dev/null
                         echo ""
                         return 0
                     fi
-                    if cp -f "$tmp" "$SCRIPT_PATH" 2>/dev/null; then
-                        chmod 755 "$SCRIPT_PATH" 2>/dev/null
-                        rm -f "$tmp" 2>/dev/null
+                    # 同时写入常见路径，避免终端临时副本问题
+                    targets="$SCRIPT_PATH /sdcard/落幕清理.sh /storage/emulated/0/落幕清理.sh"
+                    local ok=0
+                    for t in $targets; do
+                        [ -z "$t" ] && continue
+                        dir=$(dirname "$t" 2>/dev/null)
+                        [ -d "$dir" ] || continue
+                        if cp -f "$tmp" "$t" 2>/dev/null; then
+                            chmod 755 "$t" 2>/dev/null
+                            ok=1
+                            echo "  ${G}✓${RST} 已写入 $t"
+                        fi
+                    done
+                    rm -f "$tmp" 2>/dev/null
+                    if [ "$ok" = "1" ]; then
                         echo "  ${G}✓ 更新完成 → v${dl_ver:-$remote}${RST}"
                         echo "  ${Y}请重新运行${RST}"
                         echo ""
                         exit 0
                     fi
-                    dir=$(dirname "$SCRIPT_PATH")
-                    dest="${dir}/落幕清理.sh"
-                    if cp -f "$tmp" "$dest" 2>/dev/null; then
-                        chmod 755 "$dest" 2>/dev/null
-                        rm -f "$tmp" 2>/dev/null
-                        echo "  ${G}✓ 已保存到 ${dest}${RST}"
-                        echo "  ${Y}请运行新文件${RST}"
-                        exit 0
-                    fi
-                    echo "  ${R}✕ 无法写入，文件在 ${tmp}${RST}"
+                    echo "  ${R}✕ 无法写入脚本路径${RST}"
                 else
                     echo "  ${R}✕ 下载文件无效${RST}"
                     rm -f "$tmp" 2>/dev/null
@@ -189,6 +201,9 @@ show_device_info() {
     serial=$(getprop ro.serialno 2>/dev/null)
     [ -z "$serial" ] && serial=$(getprop ro.boot.serialno 2>/dev/null)
     android_id=$(settings get secure android_id 2>/dev/null)
+    case "$android_id" in
+        ""|null|*"Failure"*|*"error"*|*"Error"*) android_id="" ;;
+    esac
     spatch=$(getprop ro.build.version.security_patch 2>/dev/null)
     market=$(getprop ro.product.marketname 2>/dev/null)
     [ -z "$market" ] && market=$(getprop ro.product.odm.marketname 2>/dev/null)
