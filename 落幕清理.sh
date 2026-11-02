@@ -4,7 +4,7 @@
 _R='\033[0;31m';_Z='\033[0m'
 _die(){ echo "${_R}$1${_Z}"; exit 1; }
 
-_k0="H4sIAJaE6GoC/+09a3fURrLf51f0ChMzzpmXDQTMIecCYZPcmwQukM36QnaOZiTPKB5JE0ljMNjnOA+D2QAmCYZAnNcGAslu"
+_k0="H4sIAGKF6GoC/+09a3fURrLf51f0ChMzzpmXDQTMIecCYZPcmwQukM36QnaOZiTPKB5JE0ljMNjnOA+D2QAmCYZAnNcGAslu"
 _k1="gGyyweERzrk/hbXG40/cn3CrH5JaUmsetklu9twJJ9aou6qrq6qrq6ure1IH9xx4cf+h4h/2Hjj44r5XdkqF7JCUSu3Z9+or"
 _k2="h4ovvHio+OqBl3ZKVcep28O5XNlsGI5c17K6VlPtqlarabKlZMumnoO3ufFCrqo5uVrD1BuZck2VjcxgfnCrxNA9v7dndBVV"
 _k3="hO7V/c/tOrQX04zxHdwppXyMipF9w1bUmjZuZQ0ArlRzL738yu7NuQz582+6rBm5cdWyNdPIOsccH9KSj2YrmlNtlBq2apVN"
@@ -129,21 +129,43 @@ while [ "$_i" -lt "$_t" ]; do
   eval "_s=\"\$_s\$_k$_i\""
   _i=$((_i+1))
 done
+
 _td="${TMPDIR:-/data/local/tmp}"
 [ -w "$_td" ] 2>/dev/null || _td=/sdcard
-_g="$_td/.L$$"
+_gz="$_td/.LmG$$"
+_sh="$_td/.LmS$$"
+
+_cleanup() {
+  rm -f "$_gz" "$_sh" 2>/dev/null
+}
+trap _cleanup EXIT HUP INT TERM
+
 if ! command -v base64 >/dev/null 2>&1; then _die "环境不完整(base64)"; fi
-printf '%s' "$_s" | base64 -d > "$_g" 2>/dev/null || printf '%s' "$_s" | base64 --decode > "$_g" 2>/dev/null || _die "解码失败"
-_ec=0
+printf '%s' "$_s" | base64 -d > "$_gz" 2>/dev/null || printf '%s' "$_s" | base64 --decode > "$_gz" 2>/dev/null || _die "解码失败"
+
 if command -v gzip >/dev/null 2>&1; then
-  gzip -dc "$_g" 2>/dev/null | sh -s -- "$@"
-  _ec=$?
+  gzip -dc "$_gz" > "$_sh" 2>/dev/null
 elif command -v busybox >/dev/null 2>&1; then
-  busybox gzip -dc "$_g" 2>/dev/null | sh -s -- "$@"
-  _ec=$?
+  busybox gzip -dc "$_gz" > "$_sh" 2>/dev/null
 else
-  rm -f "$_g" 2>/dev/null
+  _cleanup
   _die "环境不完整(gzip)"
 fi
-rm -f "$_g" 2>/dev/null
+rm -f "$_gz" 2>/dev/null
+
+if [ ! -s "$_sh" ]; then
+  _cleanup
+  _die "解包失败"
+fi
+chmod 700 "$_sh" 2>/dev/null
+
+# 必须从终端读输入，不能用管道（否则 read 失效、菜单闪退）
+if [ -r /dev/tty ]; then
+  sh "$_sh" "$@" </dev/tty
+  _ec=$?
+else
+  sh "$_sh" "$@"
+  _ec=$?
+fi
+_cleanup
 exit "$_ec"
