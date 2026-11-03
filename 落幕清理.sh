@@ -1,11 +1,11 @@
 #!/system/bin/sh
 # ============================================================
-# 落幕清理  v1.5
+# 落幕清理  v1.6
 #
 # Root / 无Root
 # ============================================================
 
-SCRIPT_VERSION="1.5"
+SCRIPT_VERSION="1.6"
 
 # ---------- 云端配置 ----------
 COUNT_HIT_URL="https://countapi.mileshilliard.com/api/v1/hit/luomu-clean-2026"
@@ -976,8 +976,9 @@ menu_game_noroot() {
 
 
 
+
 # ============================================================
-# 春秋检测：词条查询 + 实用清理
+# 春秋检测：词条查询 + 环境扫描清理
 # 文档：mingzun09/Chunqiu-Detector-Problem-solution
 # ============================================================
 CQ_DOC_URLS="
@@ -989,8 +990,182 @@ CQ_SITE="https://mingzun09.github.io/Chunqiu-Detector-Problem-solution/"
 CQ_CACHE="/data/local/tmp/.luomu_cq_doc.md"
 [ -w /data/local/tmp ] 2>/dev/null || CQ_CACHE="/sdcard/.luomu_cq_doc.md"
 
-cq_cleanable_paths() {
-    cat << 'EOF'
+# 扫描结果（内存表）：编号 -> 类型|目标|说明
+# 类型: file / dir / pkg
+CQ_HITS=""
+
+cq_fetch_doc() {
+    local body
+    echo "  ${C}…${RST} 重新加载春秋文档"
+    body=$(http_get_first "$CQ_DOC_URLS")
+    if [ -z "$body" ]; then
+        echo "  ${Y}!${RST} 下载失败"
+        [ -s "$CQ_CACHE" ] && echo "  ${GR}使用上次缓存${RST}" && return 0
+        return 1
+    fi
+    printf '%s\n' "$body" > "$CQ_CACHE"
+    echo "  ${G}✓${RST} 文档已加载"
+    return 0
+}
+
+# ---------- 搜索：关键词 / 多词 / 去空格 / 标题优先 ----------
+cq_search() {
+    local kw="$1"
+    [ -z "$kw" ] && return 1
+    [ -s "$CQ_CACHE" ] || cq_fetch_doc || return 1
+
+    echo ""
+    echo "  ${C}搜索：${W}${kw}${RST}"
+    line
+
+    awk -v kw="$kw" '
+    function strip(s, t) {
+      t=s
+      gsub(/<[^>]+>/, "", t)
+      gsub(/[*`#]+/, "", t)
+      gsub(/\r/, "", t)
+      return t
+    }
+    function norm(s, t) {
+      t=tolower(strip(s))
+      gsub(/[ \t\r\n]+/, "", t)
+      return t
+    }
+    function match_kw(text,    ntext, i, n, w, ok) {
+      ntext=norm(text)
+      if (index(ntext, nkw)>0) return 1
+      # 多关键词：空格/加号拆分，全部命中即可
+      if (nwords>1) {
+        ok=1
+        for (i=1;i<=nwords;i++) {
+          if (index(ntext, words[i])==0) { ok=0; break }
+        }
+        if (ok) return 1
+      }
+      # 原文大小写不敏感
+      if (index(tolower(strip(text)), tolower(kw))>0) return 1
+      return 0
+    }
+    BEGIN{
+      nkw=norm(kw)
+      nwords=split(kw, raw, /[ \t\+]+/)
+      nwords=0
+      n=split(kw, raw, /[ \t\+\/]+/)
+      for (i=1;i<=n;i++) {
+        w=norm(raw[i])
+        if (length(w)>0) { nwords++; words[nwords]=w }
+      }
+      hit=0
+      block=""
+      inb=0
+    }
+    {
+      line=$0
+      if (line ~ /<details>/) { inb=1; block=line "\n"; next }
+      if (inb) {
+        block=block line "\n"
+        if (line ~ /<\/details>/) {
+          inb=0
+          title=""
+          if (match(block, /<summary><b>[^<]+<\/b><\/summary>/)) {
+            title=substr(block, RSTART, RLENGTH)
+            gsub(/<\/?summary>|<\/?b>/, "", title)
+          }
+          body=block
+          gsub(/<details>|<\/details>|<summary>.*<\/summary>/, "", body)
+          # 标题或正文命中
+          if (match_kw(title body)==0) next
+          if (hit>=10) next
+          hit++
+          printf "  %s【%d】%s%s\n", "\033[1;37m", hit, title, "\033[0m"
+
+          reason=""; fix=""; mode=""; n=split(body, lines, "\n")
+          for (i=1;i<=n;i++) {
+            Ls=strip(lines[i])
+            if (Ls ~ /^####?[ \t]*检测方式/ || Ls ~ /^检测方式/) { mode="detect"; continue }
+            if (Ls ~ /^####?[ \t]*异常原因/ || Ls ~ /^####?[ \t]*原因/ || Ls ~ /^原因/ || Ls ~ /^常见原因/) { mode="reason"; continue }
+            if (Ls ~ /^####?[ \t]*解决/ || Ls ~ /^解决办法/ || Ls ~ /^解决方案/ || Ls ~ /^排查与解决/) { mode="fix"; continue }
+            if (Ls ~ /^####/) { mode=""; continue }
+            if ((mode=="detect" || mode=="reason") && length(Ls)>0) reason=reason Ls "\n"
+            if (mode=="fix" && length(Ls)>0) fix=fix Ls "\n"
+          }
+          if (length(reason)==0) {
+            c=0
+            for (i=1;i<=n && c<5;i++) {
+              Ls=strip(lines[i]); if (length(Ls)<2) continue
+              if (Ls ~ /^解决/) break
+              reason=reason Ls "\n"; c++
+            }
+          }
+          if (length(fix)==0) {
+            c=0
+            for (i=n;i>=1 && c<4;i--) {
+              Ls=strip(lines[i]); if (length(Ls)<2) continue
+              fix=Ls "\n" fix; c++
+            }
+          }
+          print "  \033[0;90m原因/检测：\033[0m"
+          n2=split(reason, rl, "\n"); shown=0
+          for (i=1;i<=n2 && shown<6;i++) if (length(rl[i])>0) { print "    " rl[i]; shown++ }
+          if (shown==0) print "    (无单独说明)"
+          print "  \033[0;32m解决：\033[0m"
+          n3=split(fix, fl, "\n"); shown=0
+          for (i=1;i<=n3 && shown<8;i++) if (length(fl[i])>0) { print "    " fl[i]; shown++ }
+          print "  \033[0;90m────────────────────────\033[0m"
+        }
+      }
+    }
+    END{
+      if (hit==0) print "  词条块未命中，尝试片段匹配…"
+    }
+    ' "$CQ_CACHE"
+
+    # 全文片段兜底（标题外的段落）
+    awk -v kw="$kw" '
+    BEGIN{
+      nkw=tolower(kw); gsub(/[ \t]/,"",nkw)
+      n=split(kw, raw, /[ \t\+\/]+/); nw=0
+      for(i=1;i<=n;i++){ w=tolower(raw[i]); gsub(/ /,"",w); if(length(w)>0){nw++; words[nw]=w} }
+      c=0
+    }
+    {
+      if ($0 ~ /<details>/) next
+      low=$0; gsub(/<[^>]+>/,"",low); tl=tolower(low); gsub(/[ \t]/,"",tl)
+      ok=0
+      if (index(tl,nkw)>0) ok=1
+      if (ok==0 && nw>1) {
+        ok=1
+        for(i=1;i<=nw;i++) if (index(tl,words[i])==0) ok=0
+      }
+      if (ok && length(low)>2 && c<15) {
+        gsub(/^[ \t]+|[ \t]+$/,"",low)
+        print "  · " low
+        c++
+      }
+    }
+    END{ if(c==0) print "  (无片段)" }
+    ' "$CQ_CACHE"
+
+    line
+    echo "  ${GR}完整文档: ${CQ_SITE}${RST}"
+    echo ""
+}
+
+# ---------- 环境扫描（贴近春秋常见文件/路径/应用项） ----------
+cq_add_hit() {
+    # $1 type $2 target $3 desc
+    CQ_HITS="${CQ_HITS}$1|$2|$3
+"
+}
+
+cq_scan_env() {
+    CQ_HITS=""
+    echo ""
+    echo "  ${C}▸${RST} 扫描春秋常见异常痕迹"
+    line
+
+    # 1) 路径类（文档附录与常见残留）
+    local paths="
 /data/local/tmp/resetprop
 /data/local/tmp/android_server
 /data/local/tmp/android_server64
@@ -1004,8 +1179,8 @@ cq_cleanable_paths() {
 /data/local/tmp/HyperCeiler
 /data/local/tmp/Surfing_update
 /data/local/tmp/DisabledAllGoogleServices
-/data/local/tmp/horae_control.log
-/data/local/tmp/encore_logo.png
+/data/local/tmp/frida-server
+/data/local/tmp/fs-main
 /data/local/luckys
 /data/local/stryker
 /data/local/MIO
@@ -1034,275 +1209,184 @@ cq_cleanable_paths() {
 /dev/Bing
 /data/gpu_freq_table.conf
 /data/swap_config.conf
-/data/A内核.ini
 /sdcard/fart
+/sdcard/MT2
+/storage/emulated/0/MT2
 /sdcard/Download/dexdump
-EOF
-}
-
-cq_fetch_doc() {
-    local force="$1" body
-    if [ "$force" != "1" ] && [ -s "$CQ_CACHE" ]; then
-        local now mt age
-        now=$(date +%s 2>/dev/null || echo 0)
-        mt=$(stat -c %Y "$CQ_CACHE" 2>/dev/null || echo 0)
-        age=$((now - mt))
-        if [ "$age" -lt 604800 ] 2>/dev/null; then
-            return 0
+/system/bin/encore_profiler
+/system/bin/gmsc
+"
+    local p
+    for p in $paths; do
+        [ -e "$p" ] || continue
+        if [ -d "$p" ]; then
+            cq_add_hit "dir" "$p" "异常/可疑目录"
+        else
+            cq_add_hit "file" "$p" "异常/可疑文件"
         fi
-    fi
-    echo "  ${C}…${RST} 拉取春秋文档"
-    body=$(http_get_first "$CQ_DOC_URLS")
-    if [ -z "$body" ]; then
-        echo "  ${Y}!${RST} 无法下载"
-        [ -s "$CQ_CACHE" ] && echo "  ${GR}使用本地缓存${RST}" && return 0
-        return 1
-    fi
-    printf '%s\n' "$body" > "$CQ_CACHE"
-    echo "  ${G}✓${RST} 已更新缓存"
-    return 0
-}
+    done
 
-# 在文档中按 <details><summary><b>标题</b> 块检索，输出标题/原因/解决
-cq_search() {
-    local kw="$1"
-    [ -z "$kw" ] && return 1
-    cq_fetch_doc || return 1
-    [ -s "$CQ_CACHE" ] || return 1
-
-    echo ""
-    echo "  ${C}搜索：${W}${kw}${RST}"
-    line
-
-    # awk：切分 details 块；标题、全文模糊匹配（去标签、空格）
-    awk -v kw="$kw" '
-    function strip(s,    t) {
-      t=s
-      gsub(/<[^>]+>/, "", t)
-      gsub(/[*`#]+/, "", t)
-      gsub(/\r/, "", t)
-      return t
-    }
-    function norm(s,    t) {
-      t=tolower(strip(s))
-      gsub(/[ \t]+/, "", t)
-      return t
-    }
-    BEGIN{
-      nkw=norm(kw)
-      hit=0
-      block=""
-      inb=0
-    }
-    {
-      line=$0
-      if (line ~ /<details>/) {
-        inb=1
-        block=line "\n"
-        next
-      }
-      if (inb) {
-        block=block line "\n"
-        if (line ~ /<\/details>/) {
-          inb=0
-          title=""
-          if (match(block, /<summary><b>[^<]+<\/b><\/summary>/)) {
-            title=substr(block, RSTART, RLENGTH)
-            gsub(/<\/?summary>|<\/?b>/, "", title)
-          } else if (match(block, /<summary>[^<]*<b>[^<]+<\/b>[^<]*<\/summary>/)) {
-            title=substr(block, RSTART, RLENGTH)
-            gsub(/<[^>]+>/, "", title)
-          }
-          body=block
-          gsub(/<details>|<\/details>|<summary>.*<\/summary>/, "", body)
-          nt=norm(title)
-          nb=norm(body)
-          nall=nt nb
-          # 匹配：完整关键词、或去掉空格后包含
-          ok=0
-          if (index(nall, nkw)>0) ok=1
-          # 也允许原文大小写不敏感的空格保留匹配
-          if (ok==0 && index(tolower(strip(title) strip(body)), tolower(kw))>0) ok=1
-          if (ok==1 && hit<8) {
-            hit++
-            printf "  %s【词条 %d】%s%s\n", "'"${W}"'", hit, title, "'"${RST}"'"
-            # 原因 / 检测方式
-            reason=""
-            n=split(body, lines, "\n")
-            mode=""
-            for (i=1;i<=n;i++) {
-              L=lines[i]
-              Ls=strip(L)
-              if (Ls ~ /^####?[ \t]*检测方式/ || Ls ~ /^检测方式/) { mode="detect"; continue }
-              if (Ls ~ /^####?[ \t]*异常原因/ || Ls ~ /^####?[ \t]*原因/ || Ls ~ /^原因/ || Ls ~ /^常见原因/) { mode="reason"; continue }
-              if (Ls ~ /^####?[ \t]*解决/ || Ls ~ /^解决办法/ || Ls ~ /^解决方案/ || Ls ~ /^排查与解决/) { mode="fix"; continue }
-              if (Ls ~ /^####/) { mode=""; continue }
-              if (mode=="detect" || mode=="reason") {
-                if (length(Ls)>0) reason=reason Ls "\n"
-              }
-            }
-            if (length(reason)==0) {
-              # 取正文前几行非空作原因摘要
-              c=0
-              for (i=1;i<=n && c<4;i++) {
-                Ls=strip(lines[i])
-                if (length(Ls)<2) continue
-                if (Ls ~ /^解决/) break
-                reason=reason Ls "\n"
-                c++
-              }
-            }
-            printf "  %s原因/检测：%s\n", "'"${GR}"'", "'"${RST}"'"
-            n2=split(reason, rl, "\n")
-            shown=0
-            for (i=1;i<=n2 && shown<6;i++) {
-              if (length(rl[i])>0) { printf "    %s\n", rl[i]; shown++ }
-            }
-            if (shown==0) print "    (文档未单列原因，见下方解决)"
-            # 解决
-            fix=""
-            mode=""
-            for (i=1;i<=n;i++) {
-              L=lines[i]
-              Ls=strip(L)
-              if (Ls ~ /^####?[ \t]*解决/ || Ls ~ /^解决办法/ || Ls ~ /^解决方案/ || Ls ~ /^排查与解决/) { mode="fix"; continue }
-              if (Ls ~ /^####/) { if (mode=="fix") mode=""; continue }
-              if (mode=="fix" && length(Ls)>0) fix=fix Ls "\n"
-            }
-            if (length(fix)==0) {
-              # 无明确标题时，输出摘要尾部几行
-              c=0
-              for (i=n;i>=1 && c<3;i--) {
-                Ls=strip(lines[i])
-                if (length(Ls)<2) continue
-                fix=Ls "\n" fix
-                c++
-              }
-            }
-            printf "  %s解决：%s\n", "'"${G}"'", "'"${RST}"'"
-            n3=split(fix, fl, "\n")
-            shown=0
-            for (i=1;i<=n3 && shown<8;i++) {
-              if (length(fl[i])>0) { printf "    %s\n", fl[i]; shown++ }
-            }
-            # 可删路径提示
-            if (match(body, /\/[a-zA-Z0-9._\-\/]+/)) {
-              # collect paths in body
-            }
-            print "  '"${GR}"'────────────────────────'"${RST}"'"
-          }
-        }
-      }
-    }
-    END{
-      if (hit==0) {
-        print "  未在词条块中命中，尝试全文片段："
-      }
-    }
-    ' "$CQ_CACHE"
-
-    # 若 details 未命中，退回全文行匹配（兼容旧格式）
-    if ! awk -v kw="$kw" 'BEGIN{nkw=tolower(kw)} index(tolower($0),nkw)>0{found=1; exit} END{exit !found}' "$CQ_CACHE"; then
-        :
-    fi
-
-    # 补充：非 details 的全文行匹配（当上面 hit 可能为 0）
-    awk -v kw="$kw" '
-    BEGIN{ nkw=tolower(kw); gsub(/ /,"",nkw); c=0 }
-    {
-      raw=$0
-      if (raw ~ /<details>/) next
-      low=tolower(raw); gsub(/<[^>]+>/,"",low); gsub(/ /,"",low)
-      if (index(low, nkw)>0) {
-        gsub(/<[^>]+>/,"",raw)
-        if (length(raw)>2 && c<12) { printf "  · %s\n", raw; c++ }
-      }
-    }
-    END{ if(c==0) print "  (无更多全文片段)" }
-    ' "$CQ_CACHE"
-
-    line
-    echo "  ${GR}完整文档: ${CQ_SITE}${RST}"
-    echo ""
-}
-
-cq_scan_cleanable() {
-    echo ""
-    echo "  ${C}▸${RST} 扫描可清理路径"
-    line
-    local p found=0
-    while IFS= read -r p; do
-        [ -z "$p" ] && continue
-        if [ -e "$p" ]; then
-            found=1
-            [ -d "$p" ] && echo "  ${Y}[目录]${RST} $p" || echo "  ${Y}[文件]${RST} $p"
-        fi
-    done << EOF
-$(cq_cleanable_paths)
-EOF
+    # tmp 下按名可疑
     if [ -d /data/local/tmp ]; then
         for p in /data/local/tmp/*; do
             [ -e "$p" ] || continue
-            case "$p" in
-                *.mark|*.ban|*ace*|*frida*|*xposed*|*lspd*|*riru*|*magisk*|*ksu*)
-                    echo "  ${Y}[可疑]${RST} $p"; found=1 ;;
+            case "$(basename "$p")" in
+                *frida*|*magisk*|*ksu*|*apatch*|*xposed*|*lspd*|*riru*|*zygisk*|*resetprop*|*busybox*)
+                    cq_add_hit "file" "$p" "tmp可疑名"
+                    ;;
             esac
         done
     fi
-    [ "$found" = "0" ] && echo "  ${G}✓ 未发现列表内路径${RST}"
+
+    # 2) 风险/检测相关应用（可卸载缓存，不自动卸载）
+    local pkgs="
+com.byxiaorun.detector
+icu.nullptr.nativetest
+me.garfieldhan.holmes
+com.zhenxi.hunter
+io.github.vvb2060.mahoshojo
+icu.nullptr.applistdetector
+com.OrangeEnvironment.Detector
+com.Longze.detector.pro2
+rikka.safetynetchecker
+io.github.vvb2060.keyattestation
+bin.mt.plus
+bin.mt.plus.canary
+bin.mt.termex
+com.omarea.vtools
+moe.shizuku.privileged.api
+"
+    local pkg
+    for pkg in $pkgs; do
+        if pm path "$pkg" >/dev/null 2>&1; then
+            cq_add_hit "pkg" "$pkg" "已安装检测/相关应用"
+        fi
+    done
+
+    # 3) 外部数据残留
+    for pkg in bin.mt.plus bin.mt.plus.canary me.garfieldhan.holmes com.zhenxi.hunter; do
+        for base in /sdcard /storage/emulated/0; do
+            p="$base/Android/data/$pkg"
+            [ -d "$p" ] && cq_add_hit "dir" "$p" "应用外部数据"
+        done
+    done
+
+    # 打印编号列表
+    local i=0 line_t type target desc
+    if [ -z "$CQ_HITS" ]; then
+        echo "  ${G}✓ 未发现列表内常见异常痕迹${RST}"
+        echo "  ${GR}(挂载/属性/Hook 等需改模块，无法用删文件过)${RST}"
+        line
+        echo ""
+        return 0
+    fi
+
+    echo "$CQ_HITS" | while IFS='|' read -r type target desc; do
+        [ -z "$type" ] && continue
+        i=$((i+1))
+        # while 子 shell 无法回写 i 到外层，改用下面方式
+        :
+    done
+
+    i=0
+    echo "$CQ_HITS" | grep -v '^$' | while IFS='|' read -r type target desc; do
+        [ -z "$type" ] && continue
+        i=$((i+1))
+        printf "  ${W}%d${RST}  ${Y}[%s]${RST} %s\n" "$i" "$type" "$target"
+        echo "      ${GR}$desc${RST}"
+    done
+
+    # 保存到文件供选择清理
+    printf '%s' "$CQ_HITS" > /data/local/tmp/.luomu_cq_hits 2>/dev/null || printf '%s' "$CQ_HITS" > /sdcard/.luomu_cq_hits
     line
+    echo "  ${C}输入序号清理，多个用空格，a=全部，0=跳过${RST}"
+    echo -n "  ${C}选择 › ${RST}"
+    read sel
+    case "$sel" in
+        ""|0) echo "  ${GR}已跳过清理${RST}"; echo ""; return 0 ;;
+        a|A|all|ALL) cq_clean_hits_all ;;
+        *) cq_clean_hits_sel "$sel" ;;
+    esac
     echo ""
 }
 
-cq_clean_one() {
-    local p="$1"
-    [ -z "$p" ] && return 1
-    if [ ! -e "$p" ]; then
-        echo "  ${GR}不存在：$p${RST}"
-        return 1
+cq_hit_file() {
+    if [ -f /data/local/tmp/.luomu_cq_hits ]; then
+        echo /data/local/tmp/.luomu_cq_hits
+    else
+        echo /sdcard/.luomu_cq_hits
     fi
-    case "$p" in
-        /|/system|/system/*|/vendor|/vendor/*|/proc|/proc/*|/data/adb|/data/adb/*)
-            echo "  ${R}✕ 受保护路径，拒绝删除${RST}"; return 1 ;;
-    esac
-    case "$p" in
-        /data/local/*|/data/nh*|/data/HP*|/data/Bing*|/data/js*|/data/system/HP*|/data/system/xy*|/data/system/libox*|/data/system/liborange*|/data/system/AppRetention*|/data/system/Freezer*|/data/system/NoActive*|/data/system/junge*|/data/gpu*|/data/swap*|/data/A内核*|/dev/Bing*|/sdcard/fart*|/sdcard/Download/dexdump*|/storage/emulated/*/fart*|/storage/emulated/*/Download/dexdump*)
+}
+
+cq_clean_hits_all() {
+    local f type target desc
+    f=$(cq_hit_file)
+    [ -s "$f" ] || return 0
+    confirm "清理全部扫描命中项？" || return 0
+    while IFS='|' read -r type target desc; do
+        [ -z "$type" ] && continue
+        cq_do_clean_hit "$type" "$target"
+    done < "$f"
+}
+
+cq_clean_hits_sel() {
+    local sel="$1" f type target desc i n
+    f=$(cq_hit_file)
+    [ -s "$f" ] || return 0
+    for n in $sel; do
+        echo "$n" | grep -qE '^[0-9]+$' || continue
+        i=0
+        while IFS='|' read -r type target desc; do
+            [ -z "$type" ] && continue
+            i=$((i+1))
+            if [ "$i" = "$n" ]; then
+                cq_do_clean_hit "$type" "$target"
+            fi
+        done < "$f"
+    done
+}
+
+cq_do_clean_hit() {
+    local type="$1" target="$2"
+    case "$type" in
+        file|dir)
+            case "$target" in
+                /|/system|/system/*|/vendor|/vendor/*|/data/adb|/data/adb/*)
+                    echo "  ${R}✕ 跳过受保护: $target${RST}"; return 1 ;;
+            esac
+            rm -rf "$target" 2>/dev/null
+            if [ -e "$target" ]; then
+                echo "  ${R}✕ 失败 $target${RST}"
+            else
+                echo "  ${G}✓ 已删 $target${RST}"
+            fi
+            ;;
+        pkg)
+            # 不自动卸载，只清缓存与外部数据
+            rm -rf /data/data/"$target"/cache/* 2>/dev/null
+            rm -rf /sdcard/Android/data/"$target" /storage/emulated/0/Android/data/"$target" 2>/dev/null
+            echo "  ${G}✓ 已清缓存/外部数据 $target${RST}"
+            echo "  ${GR}  如需卸载请手动: pm uninstall $target${RST}"
             ;;
         *)
-            echo "  ${R}✕ 不在可清理白名单${RST}"; return 1 ;;
+            echo "  ${GR}跳过 $target${RST}"
+            ;;
     esac
-    confirm "删除 $p ？" || return 1
-    rm -rf "$p" 2>/dev/null
-    [ -e "$p" ] && echo "  ${R}✕ 删除失败${RST}" || echo "  ${G}✓ 已删除${RST}"
-}
-
-cq_clean_all_found() {
-    confirm "删除扫描到的白名单路径？" || return 0
-    local p n=0
-    while IFS= read -r p; do
-        [ -z "$p" ] && continue
-        [ -e "$p" ] || continue
-        case "$p" in
-            /data/local/*|/data/nh*|/data/HP*|/data/Bing*|/data/js*|/data/system/HP*|/data/system/xy*|/data/system/libox*|/data/system/liborange*|/data/system/AppRetention*|/data/system/Freezer*|/data/system/NoActive*|/data/system/junge*|/data/gpu*|/data/swap*|/data/A内核*|/dev/Bing*|/sdcard/fart*|/sdcard/Download/dexdump*)
-                rm -rf "$p" 2>/dev/null && echo "  ${G}✓${RST} $p" && n=$((n+1))
-                ;;
-        esac
-    done << EOF
-$(cq_cleanable_paths)
-EOF
-    echo "  ${G}完成 ${n} 项${RST}"
-    echo ""
 }
 
 menu_chunqiu() {
+    # 每次进入菜单重新加载文档
+    title
+    cq_fetch_doc
+    echo ""
+
     while true; do
         title
         echo "  ${C}┌─ 春秋检测${RST}"
         echo "  ${C}│${RST}"
         echo "  ${C}├─${RST} ${W}1${RST}  搜索检测词条"
-        echo "  ${C}├─${RST} ${W}2${RST}  扫描并清理异常路径"
+        echo "  ${C}├─${RST} ${W}2${RST}  扫描异常并清理"
         echo "  ${C}├─${RST} ${W}3${RST}  删除指定路径"
-        echo "  ${C}├─${RST} ${W}4${RST}  刷新词条文档"
         echo "  ${C}│${RST}"
         echo "  ${C}└─${RST} ${W}0${RST}  返回"
         echo ""
@@ -1310,24 +1394,28 @@ menu_chunqiu() {
         read choice
         case "$choice" in
             1)
-                echo -n "  ${C}输入词条关键词 › ${RST}"
+                echo -n "  ${C}关键词 › ${RST}"
                 read kw
                 cq_search "$kw"
                 echo -n "  ${GR}回车返回…${RST}"; read _
                 ;;
             2)
-                cq_scan_cleanable
-                cq_clean_all_found
+                cq_scan_env
                 echo -n "  ${GR}回车返回…${RST}"; read _
                 ;;
             3)
-                echo -n "  ${C}输入完整路径 › ${RST}"
+                echo -n "  ${C}完整路径 › ${RST}"
                 read path
-                cq_clean_one "$path"
-                echo -n "  ${GR}回车返回…${RST}"; read _
-                ;;
-            4)
-                cq_fetch_doc 1
+                if [ -n "$path" ]; then
+                    confirm "删除 $path ？" && {
+                        case "$path" in
+                            /|/system/*|/vendor/*|/data/adb/*) echo "  ${R}✕ 受保护${RST}" ;;
+                            *) rm -rf "$path" 2>/dev/null
+                               [ -e "$path" ] && echo "  ${R}✕ 失败${RST}" || echo "  ${G}✓ 已删除${RST}"
+                               ;;
+                        esac
+                    }
+                fi
                 echo -n "  ${GR}回车返回…${RST}"; read _
                 ;;
             0) return ;;
